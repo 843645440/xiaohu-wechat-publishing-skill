@@ -1,0 +1,24 @@
+{
+  "workspace_dir": "~/.hermes/workspaces/wechat",
+  "output_dir": "~/.hermes/workspaces/wechat/manual-format",
+  "vault_root": "~/.hermes/workspaces/wechat/vault",
+  "image_search_paths": [],
+  "settings": {
+    "default_theme": "newspaper",
+    "auto_open_browser": false
+  },
+  "wechat": {
+    "app_id": "YOUR_APP_ID",
+    "app_secret": "YOUR_APP_SECRET",
+    "author": ""
+  },
+  "cover": {
+    "output_dir": "~/.hermes/workspaces/wechat/covers",
+    "image_generation_script": ""
+  },
+  "ai": {
+    "url": "https://openrouter.ai/api/v1",
+    "api_key": "",
+    "model": "anthropic/claude-sonnet-4"
+  }
+}

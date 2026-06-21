@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>Swiss Minimal Cover Template</title>
+<style>
+@font-face{font-family:"XinYuGongHeXieSong";src:url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-H.ttf") format("truetype");font-weight:900;font-display:block;}
+@font-face{font-family:"XinYuGongHeXieSong";src:url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-B.ttf") format("truetype");font-weight:700;font-display:block;}
+@font-face{font-family:"XinYuGongHeXieSong";src:url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-M.ttf") format("truetype");font-weight:500;font-display:block;}
+@font-face{font-family:"XinYuGongHeXieSong";src:url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-R.ttf") format("truetype");font-weight:400;font-display:block;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"XinYuGongHeXieSong",sans-serif;width:900px;height:383px;
+  background:#fafaf7;color:#111;
+  display:flex;flex-direction:column;justify-content:space-between;padding:50px 64px;}
+.brand{font-size:14px;font-weight:700;letter-spacing:4px;color:#888;}
+.line{width:60px;height:4px;background:#111;margin-bottom:18px;}
+.title{font-size:84px;font-weight:900;line-height:1.0;letter-spacing:-3px;}
+.title .hl{color:#E53935;}
+.sub{font-size:18px;font-weight:400;color:#555;margin-top:14px;}
+.foot{display:flex;justify-content:space-between;font-size:13px;color:#888;letter-spacing:2px;font-weight:700;}
+</style></head>
+<body>
+<div class="brand">{{BRAND}}</div>
+<div>
+  <div class="line"></div>
+  <div class="title">{{TITLE_LINE1}}<span class="hl">{{TITLE_HL}}</span></div>
+  <div class="sub">{{SUBTITLE}}</div>
+</div>
+<div class="foot"><span>{{ISSUE}}</span><span>{{TOPIC}}</span></div>
+</body></html>

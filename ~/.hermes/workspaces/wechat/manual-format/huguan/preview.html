@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公众号互关，100人速成，附流量主开通攻略 - 微信排版预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f0f0f0;
+    min-height: 100vh;
+}
+.toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.toolbar-info {
+    font-size: 13px;
+    color: #666;
+}
+.toolbar-info span {
+    margin-right: 12px;
+}
+.toolbar-info .theme-name {
+    background: #f5f5f5;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+    color: #333;
+}
+.copy-btn {
+    padding: 10px 24px;
+    background: #07c160;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+}
+.copy-btn:hover { background: #06ae56; transform: translateY(-1px); }
+.copy-btn:active { transform: translateY(0); }
+.copy-btn.copied {
+    background: #34c759;
+}
+.phone-frame {
+    max-width: 415px;
+    margin: 76px auto 40px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+.phone-header {
+    background: #ededed;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #999;
+    border-bottom: 1px solid #e0e0e0;
+}
+.article-content {
+    padding: 20px;
+    font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+/* 隐藏的纯微信 HTML，用于复制 */
+#wechatHtml {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+}
+/* ── Font Size Selector ── */
+.font-size-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px auto;
+    padding: 8px 0;
+    max-width: 415px;
+}
+.fs-label {
+    font-size: 13px;
+    color: #999;
+}
+.fs-btn {
+    padding: 4px 12px;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    background: #fff;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.fs-btn:hover {
+    border-color: #07C160;
+    color: #07C160;
+}
+.fs-btn.active {
+    background: #07C160;
+    border-color: #07C160;
+    color: #fff;
+}
+@media (max-width: 480px) {
+    .phone-frame {
+        margin: 60px 0 20px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    .toolbar {
+        padding: 8px 12px;
+    }
+    .copy-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+    <div class="toolbar-left">
+        <div class="toolbar-info">
+            <span class="theme-name">报纸</span>
+            <span>350 字</span>
+        </div>
+    </div>
+    <button class="copy-btn" onclick="copyToWechat()">复制到微信</button>
+</div>
+
+<div class="font-size-selector">
+    <span class="fs-label">字号</span>
+    <button class="fs-btn active" data-size="15" onclick="switchFontSize(15)">15px</button>
+    <button class="fs-btn" data-size="16" onclick="switchFontSize(16)">16px</button>
+</div>
+
+<div class="phone-frame">
+    <div class="phone-header">微信公众号预览</div>
+    <div class="article-content" id="articleContent">
+<section style="background-color:#ffffff;padding:16px" data-darkmode-bgcolor="#1a1712"><h1 style="font-size:29px;font-weight:700;color:#111111;line-height:1.3;letter-spacing:-0.015em;padding:10px 0 9px;border-top:2px solid #111111;border-bottom:1px solid #111111;text-align:left;margin-top:38px;margin-bottom:16px" data-darkmode-color="#e0dcd4">公众号互关，100 人速成，附流量主开通攻略</h1>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">说个扎心的事实。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">你注册公众号那天起，500 粉就是一道坎。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">没到 500，流量主开通按钮就是灰的。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">阅读收益、广告分成、返佣佣金，全部跟你没关系。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">那怎么办？</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">最笨但最有效的方法——互关。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">找 100 个跟你一样刚起步的人，你关他，他关你，一天之内就能从 0 到 100。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">听起来很 Low 对吧？</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">但 Low 不 Low 不重要，能用就行。</p>
+<h2 style="font-size:19px;font-weight:700;color:#111111;line-height:1.5;text-transform:uppercase;letter-spacing:0.12em;text-align:center;padding:10px 0;border-top:1px solid rgba(17,17,17,0.85);border-bottom:1px solid rgba(17,17,17,0.85);margin-top:38px;margin-bottom:18px" data-darkmode-color="#e0dcd4">互关的正确姿势</h2>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">不要去评论区发"互关求关注"，那种要么被删要么没人理。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">去互关群。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">微信搜"公众号互关"，能找到一堆 500 人左右的群。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">进去后不要一上来就甩链接。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">先发一句：刚起步的小号，求各位大佬带一带，互关走起。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">然后等 5 分钟，私信逐个加。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">别贪多，每天加 20-30 个，三天搞定 100 人。</p>
+<h2 style="font-size:19px;font-weight:700;color:#111111;line-height:1.5;text-transform:uppercase;letter-spacing:0.12em;text-align:center;padding:10px 0;border-top:1px solid rgba(17,17,17,0.85);border-bottom:1px solid rgba(17,17,17,0.85);margin-top:38px;margin-bottom:18px" data-darkmode-color="#e0dcd4">流量主开通条件</h2>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">粉丝 500 + 注册满 30 天，就差这两个条件。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">很多号卡在粉丝数上，互关就是最短的路径。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">开通后，每篇文章底部自动挂广告，有人点你就有收益。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">几百块可能不多，但蚊子腿也是肉。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">关键是——它能跑起来。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">你不开始，永远是 0。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8"><strong style="font-weight:700;color:#111111;background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 62%, rgba(50,104,145,0.1) 62%, rgba(50,104,145,0.1) 100%);display:inline" data-darkmode-color="#e0a060">想在公众号搞点副业的，点赞关注，后台回复"互关"，我拉你进群</strong>。</p></section>
+    </div>
+</div>
+
+<!-- 隐藏区域：存放纯微信 HTML（不含预览壳样式），复制时用这个 -->
+<div id="wechatHtml">
+<section style="background-color:#ffffff;padding:16px" data-darkmode-bgcolor="#1a1712"><h1 style="font-size:29px;font-weight:700;color:#111111;line-height:1.3;letter-spacing:-0.015em;padding:10px 0 9px;border-top:2px solid #111111;border-bottom:1px solid #111111;text-align:left;margin-top:38px;margin-bottom:16px" data-darkmode-color="#e0dcd4">公众号互关，100 人速成，附流量主开通攻略</h1>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">说个扎心的事实。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">你注册公众号那天起，500 粉就是一道坎。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">没到 500，流量主开通按钮就是灰的。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">阅读收益、广告分成、返佣佣金，全部跟你没关系。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">那怎么办？</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">最笨但最有效的方法——互关。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">找 100 个跟你一样刚起步的人，你关他，他关你，一天之内就能从 0 到 100。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">听起来很 Low 对吧？</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">但 Low 不 Low 不重要，能用就行。</p>
+<h2 style="font-size:19px;font-weight:700;color:#111111;line-height:1.5;text-transform:uppercase;letter-spacing:0.12em;text-align:center;padding:10px 0;border-top:1px solid rgba(17,17,17,0.85);border-bottom:1px solid rgba(17,17,17,0.85);margin-top:38px;margin-bottom:18px" data-darkmode-color="#e0dcd4">互关的正确姿势</h2>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">不要去评论区发"互关求关注"，那种要么被删要么没人理。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">去互关群。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">微信搜"公众号互关"，能找到一堆 500 人左右的群。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">进去后不要一上来就甩链接。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">先发一句：刚起步的小号，求各位大佬带一带，互关走起。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">然后等 5 分钟，私信逐个加。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">别贪多，每天加 20-30 个，三天搞定 100 人。</p>
+<h2 style="font-size:19px;font-weight:700;color:#111111;line-height:1.5;text-transform:uppercase;letter-spacing:0.12em;text-align:center;padding:10px 0;border-top:1px solid rgba(17,17,17,0.85);border-bottom:1px solid rgba(17,17,17,0.85);margin-top:38px;margin-bottom:18px" data-darkmode-color="#e0dcd4">流量主开通条件</h2>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">粉丝 500 + 注册满 30 天，就差这两个条件。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">很多号卡在粉丝数上，互关就是最短的路径。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">开通后，每篇文章底部自动挂广告，有人点你就有收益。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">几百块可能不多，但蚊子腿也是肉。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">关键是——它能跑起来。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8">你不开始，永远是 0。</p>
+<p style="font-size:15px;color:#000000;line-height:1.7;margin-top:0;margin-bottom:18px;letter-spacing:0.5px;text-align:left" data-darkmode-color="#c8c8c8"><strong style="font-weight:700;color:#111111;background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 62%, rgba(50,104,145,0.1) 62%, rgba(50,104,145,0.1) 100%);display:inline" data-darkmode-color="#e0a060">想在公众号搞点副业的，点赞关注，后台回复"互关"，我拉你进群</strong>。</p></section>
+</div>
+
+<script>
+function switchFontSize(size) {
+    // 更新按钮状态
+    document.querySelectorAll('.fs-btn').forEach(function(btn) {
+        if (parseInt(btn.dataset.size) === size) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 修改可见预览区和隐藏复制区的 p 标签
+    ['articleContent', 'wechatHtml'].forEach(function(id) {
+        var container = document.getElementById(id);
+        if (!container) return;
+        container.querySelectorAll('p').forEach(function(p) {
+            var currentSize = parseInt(window.getComputedStyle(p).fontSize);
+            if (currentSize >= 14 && currentSize <= 16) {
+                p.style.fontSize = size + 'px';
+                p.style.lineHeight = size === 16 ? '1.75' : '1.8';
+            }
+        });
+        // 修改列表项文字
+        container.querySelectorAll('[style*="font-size:15px"]').forEach(function(el) {
+            if (el.tagName === 'SPAN' || el.tagName === 'SECTION') {
+                el.style.fontSize = size + 'px';
+            }
+        });
+    });
+
+    // 保存选择到 localStorage
+    localStorage.setItem('wechat-format-fontsize', size);
+}
+
+// 页面加载时恢复上次选择
+document.addEventListener('DOMContentLoaded', function() {
+    var saved = localStorage.getItem('wechat-format-fontsize');
+    if (saved && saved !== '15') {
+        switchFontSize(parseInt(saved));
+    }
+});
+
+function copyToWechat() {
+    const source = document.getElementById('wechatHtml');
+    const range = document.createRange();
+    range.selectNodeContents(source);
+
+    // 临时让元素可见（否则某些浏览器不允许复制隐藏元素）
+    source.style.position = 'fixed';
+    source.style.left = '0';
+    source.style.top = '0';
+    source.style.opacity = '0.01';
+    source.style.width = '375px';
+
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    try {
+        document.execCommand('copy');
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = '已复制!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = '复制到微信';
+            btn.classList.remove('copied');
+        }, 2500);
+    } catch(e) {
+        // fallback: 尝试 Clipboard API
+        const html = source.innerHTML;
+        const blob = new Blob([html], { type: 'text/html' });
+        const item = new ClipboardItem({ 'text/html': blob });
+        navigator.clipboard.write([item]).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            btn.textContent = '已复制!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '复制到微信';
+                btn.classList.remove('copied');
+            }, 2500);
+        }).catch(() => {
+            alert('复制失败，请手动选中文章内容复制');
+        });
+    }
+
+    // 恢复隐藏
+    source.style.position = 'absolute';
+    source.style.left = '-9999px';
+    source.style.top = '-9999px';
+    source.style.opacity = '';
+    source.style.width = '';
+
+    sel.removeAllRanges();
+}
+</script>
+</body>
+</html>

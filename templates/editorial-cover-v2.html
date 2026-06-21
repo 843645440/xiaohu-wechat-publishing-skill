@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editorial Cover Template V2</title>
+  <style>
+    :root {
+      --paper: #f6f1e8;
+      --paper-2: #ece1cf;
+      --ink: #111111;
+      --muted: #6f695e;
+      --navy: #173556;
+      --navy-2: #244a78;
+      --red: #b32018;
+      --red-deep: #8f1711;
+      --gold: #bf8e17;
+    }
+    @font-face {
+      font-family: "XinYuGongHeXieSong";
+      src: url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-L.ttf") format("truetype");
+      font-weight: 300; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: "XinYuGongHeXieSong";
+      src: url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-R.ttf") format("truetype");
+      font-weight: 400; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: "XinYuGongHeXieSong";
+      src: url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-M.ttf") format("truetype");
+      font-weight: 500; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: "XinYuGongHeXieSong";
+      src: url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-S.ttf") format("truetype");
+      font-weight: 600; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: "XinYuGongHeXieSong";
+      src: url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-B.ttf") format("truetype");
+      font-weight: 700; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: "XinYuGongHeXieSong";
+      src: url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-H.ttf") format("truetype");
+      font-weight: 900; font-style: normal; font-display: block;
+    }
+    @font-face {
+      font-family: "WQYZenHeiLocal";
+      src: url("file:///usr/share/fonts/truetype/wqy/wqy-zenhei.ttc") format("truetype");
+      font-weight: 400 950;
+      font-style: normal;
+      font-display: block;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "XinYuGongHeXieSong","WQYZenHeiLocal","WenQuanYi Zen Hei","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;
+      width: 900px;
+      height: 383px;
+      overflow: hidden;
+      color: var(--ink);
+    }
+    .cover {
+      width: 900px;
+      height: 383px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      border: 1px solid rgba(17,17,17,.08);
+      box-shadow: 0 18px 36px rgba(59,44,18,.10);
+    }
+    .cover-inner {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      padding: 22px 34px 26px 34px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      row-gap: 10px;
+    }
+    .cover.xiaocong {
+      background:
+        radial-gradient(circle at 16% 12%, rgba(36,74,120,.14), transparent 26%),
+        radial-gradient(circle at 82% 16%, rgba(191,142,23,.16), transparent 22%),
+        linear-gradient(180deg, #f8f3ea 0%, #efe6d7 100%);
+    }
+    .cover.xiaocong::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(23,53,86,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23,53,86,.04) 1px, transparent 1px);
+      background-size: 30px 30px;
+      opacity: .7;
+    }
+    .cover.xiaocong::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 220px;
+      height: 220px;
+      border: 1px solid rgba(23,53,86,.10);
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 14px rgba(191,142,23,.05);
+    }
+    .cover.yeluzi {
+      background:
+        radial-gradient(circle at 8% 8%, rgba(179,32,24,.20), transparent 26%),
+        radial-gradient(circle at 90% 14%, rgba(17,17,17,.14), transparent 24%),
+        linear-gradient(180deg, #f4ecdf 0%, #ecdfd0 100%);
+    }
+    .cover.yeluzi::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(115deg, transparent 0 60%, rgba(179,32,24,.10) 60% 62.4%, transparent 62.4% 100%),
+        linear-gradient(115deg, transparent 0 64%, rgba(17,17,17,.06) 64% 64.8%, transparent 64.8% 100%),
+        linear-gradient(rgba(17,17,17,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17,17,17,.022) 1px, transparent 1px);
+      background-size: auto, auto, 32px 32px, 32px 32px;
+      opacity: .85;
+    }
+    .cover.yeluzi::after {
+      content: "WILD";
+      position: absolute;
+      left: 24px;
+      bottom: 18px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: rgba(179,32,24,.55);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      padding: 6px 4px;
+      border-left: 2px solid rgba(179,32,24,.45);
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .meta-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .meta-left::before {
+      content: "";
+      width: 34px;
+      height: 5px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--red), var(--gold));
+    }
+    .cover.xiaocong .meta-left { color: var(--navy); }
+    .cover.xiaocong .meta-left::before {
+      background: linear-gradient(90deg, var(--navy), var(--gold));
+    }
+    .cover.yeluzi .meta-left { color: var(--red-deep); }
+    .cover.yeluzi .meta-left::before {
+      background: linear-gradient(90deg, var(--red-deep), #1a1a1a);
+    }
+    .meta-right {
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 900;
+      letter-spacing: .5px;
+      text-align: right;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.58);
+      border: 1px solid rgba(17,17,17,.05);
+    }
+    .cover.xiaocong .meta-right {
+      border-color: rgba(23,53,86,.22);
+      border-left: 3px solid var(--navy);
+      border-radius: 4px 12px 12px 4px;
+    }
+    .cover.yeluzi .meta-right {
+      border-color: rgba(179,32,24,.28);
+      border-right: 3px solid var(--red-deep);
+      border-radius: 12px 4px 4px 12px;
+    }
+    .title-main {
+      margin: 0;
+      font-weight: 980;
+      letter-spacing: -1.8px;
+      color: var(--ink);
+      font-size: 60px;
+      line-height: 1.03;
+      max-width: 580px;
+    }
+    .title-main .red { color: var(--red); }
+    .title-main .navy { color: var(--navy); }
+    .kicker-line {
+      margin-top: 8px;
+      font-size: 17px;
+      line-height: 1.34;
+      font-weight: 800;
+      max-width: 540px;
+      color: var(--muted);
+    }
+    .kicker-line strong { color: var(--ink); }
+    .bottom {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 140px;
+      align-items: end;
+      gap: 16px;
+      min-height: 72px;
+      padding-right: 18px;
+      padding-bottom: 18px;
+    }
+    .note-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: 100%;
+      align-content: end;
+      padding-bottom: 2px;
+    }
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 900;
+      border: 1px solid rgba(17,17,17,.08);
+      background: rgba(255,255,255,.72);
+      color: var(--ink);
+    }
+    .cover.xiaocong .pill:nth-child(2n) {
+      color: var(--navy);
+      background: rgba(23,53,86,.06);
+      border-color: rgba(23,53,86,.12);
+    }
+    .cover.yeluzi .pill:nth-child(2n+1) {
+      color: var(--red-deep);
+      background: rgba(179,32,24,.08);
+      border-color: rgba(179,32,24,.16);
+    }
+    .impact {
+      width: 140px;
+      min-width: 140px;
+      max-width: 140px;
+      padding: 9px 11px 9px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.7));
+      border: 1px solid rgba(17,17,17,.08);
+      box-shadow: 0 8px 16px rgba(59,44,18,.06);
+      text-align: right;
+      flex-shrink: 0;
+      justify-self: end;
+      align-self: end;
+    }
+    .impact-top {
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .8px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .impact-main {
+      margin-top: 2px;
+      font-size: 31px;
+      line-height: .98;
+      font-weight: 980;
+      letter-spacing: -.8px;
+      color: var(--red);
+    }
+    .impact-sub {
+      margin-top: 4px;
+      font-size: 10px;
+      line-height: 1.18;
+      font-weight: 900;
+      color: var(--ink);
+    }
+    .cover.yeluzi .impact-main { color: var(--red-deep); }
+    .main-copy {
+      align-self: start;
+      padding-top: 4px;
+      padding-left: 10px;
+      position: relative;
+    }
+    .cover.xiaocong .main-copy::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: 8px;
+      width: 4px;
+      height: 38px;
+      background: linear-gradient(180deg, var(--navy), var(--gold));
+      border-radius: 2px;
+    }
+    .cover.yeluzi .main-copy::before {
+      content: "";
+      position: absolute;
+      left: -4px;
+      top: 6px;
+      width: 6px;
+      height: 44px;
+      background: var(--red-deep);
+    }
+  </style>
+</head>
+<body>
+  <div class="cover {{ACCOUNT_STYLE}}">
+    <div class="cover-inner">
+      <div class="meta-row">
+        <div class="meta-left">{{META_LEFT}}</div>
+        <div class="meta-right">{{META_RIGHT_LINE1}}<br/>{{META_RIGHT_LINE2}}</div>
+      </div>
+      <div class="main-copy">
+        <h1 class="title-main">{{TITLE_LINE1}}<br/>{{TITLE_LINE2}}</h1>
+        <div class="kicker-line">{{KICKER_TEXT}}</div>
+      </div>
+      <div class="bottom">
+        <div class="note-strip">
+          <span class="pill">{{PILL_1}}</span>
+          <span class="pill">{{PILL_2}}</span>
+          <span class="pill">{{PILL_3}}</span>
+          <span class="pill">{{PILL_4}}</span>
+          <span class="pill">{{PILL_5}}</span>
+        </div>
+        <div class="impact">
+          <div class="impact-top">{{IMPACT_TOP}}</div>
+          <div class="impact-main">{{IMPACT_MAIN}}</div>
+          <div class="impact-sub">{{IMPACT_SUB}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
