@@ -64,5 +64,22 @@ class DoctorModeTests(unittest.TestCase):
         self.assertTrue(mode_requires_accounts("all"))
 
 
+class HighRiskScanTests(unittest.TestCase):
+    def test_flags_high_risk_keyword(self):
+        from publish_history import check_high_risk
+
+        hits = check_high_risk("第一行正常\n央行可能降息，建议抄底\n结尾")
+
+        kws = {kw for _ln, kw, _sn in hits}
+        self.assertIn("降息", kws)
+        self.assertIn("抄底", kws)
+        self.assertEqual(hits[0][0], 2)  # line number
+
+    def test_clean_text_has_no_hits(self):
+        from publish_history import check_high_risk
+
+        self.assertEqual(check_high_risk("一篇讲AI工具如何改变设计师日常的文章"), [])
+
+
 if __name__ == "__main__":
     unittest.main()

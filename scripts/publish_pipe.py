@@ -46,7 +46,7 @@ from pathlib import Path
 
 from workspace import ensure_workspace, token_cache_path, workspace_root
 from image_injector import inject as inject_images, format_stats as format_inject_stats
-from publish_history import check_ai_disclosure, record_publish
+from publish_history import check_ai_disclosure, check_high_risk, print_high_risk_warnings, record_publish
 from runtime import python_bin
 
 # ── 路径 ──────────────────────────────────────────────────────────────
@@ -485,6 +485,8 @@ def _run_pipe():
             check_ai_disclosure(md_text, raise_on_hit=True)
         else:
             print("  ⚠ AI 披露声明检查已跳过（--skip-ai-guard）")
+        # 高风险关键词软扫描（warning 级，不阻断；见 quality-and-risk.md C 节）
+        print_high_risk_warnings(check_high_risk(md_text))
 
     # ── 1. 账号设置（支持多账号列表）──
     accounts_to_publish = []  # list of (name, app_id, app_secret, author)

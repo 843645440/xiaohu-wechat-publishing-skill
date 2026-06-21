@@ -22,11 +22,13 @@ metadata:
 - 凭据只从 `~/.hermes/.env` 读取；不要把真实 app_id/app_secret 写进 skill。
 - 正式产物默认写入 `~/.hermes/workspaces/wechat`。
 - 正文、封面、图片里都不要写任何 AI 身份披露；`publish_pipe.py` 会硬扫描，命中直接失败。
+- **创作质量与风险规避是最高优先级**：避开微信"低创作度"标签与政治财经高风险限流，规则见 `prompts/quality-and-risk.md`，与其他写作文件冲突时一律以它为准。
 
 ## 先读什么
 
 按任务读最少的文件，别全量加载：
 
+- **写任何正文前必读 `prompts/quality-and-risk.md`**（信息增量硬标准 + 去标题党 + 风险软规避 + 去同质化）。
 - 写正文前读 `prompts/writing-persona.md` 和 `prompts/markdown-elements.md`。
 - AI / 科技 / 产业稿额外读 `references/ai-tech-writing-guide.md`。
 - 做封面或正文图前读 `prompts/visual-design.md`。
@@ -63,6 +65,10 @@ python3 scripts/run.py publish_pipe.py --input article.md --cover cover.png --ac
 
 ## 写作快路径
 
+- **每篇必须满足信息增量硬标准（详见 `prompts/quality-and-risk.md`）**：≥3 个独立信息源、严禁单源洗稿（单源 >70% 重写）、含 ≥2 种原创分析（横向/纵向对比、数据测算、对普通人的可操作结论）。终稿自检一句："这篇给了读者哪条别处看不到的信息或判断？"答不出不发。
+- **风险软规避**：不评判/预测政策走向、不预测股汇币涨跌、不喊点位、不荐买卖、不碰敏感时政/地缘/群体事件；财经科技只从"对普通人工作/消费/生活的影响"切入。
+- **去标题党**：标题信息型/价值型，准确反映正文；禁止震惊体空转、夸张承诺。
+- **去同质化**：双账号同日选题在事件/主题层面必须不同；发布前比对 publish-history，核心实体+结构高度相似则换题。
 - **先搞清楚用户要的是什么类型的帖子，不要猜。** 当用户说的主题有歧义时（比如"互关帖"可能是分析互关利弊的文章，也可能是互关涨粉的 CTA 帖子），必须先确认意图再动笔。错误理解 = 白写 + 白排版 + 白发布 + 草稿箱多一篇废稿。用 clarify 或直接问一句再写。
 - 起稿前用工具确认真实当前日期；新闻、政策、融资、公司动态、人物事件必须核查时间新鲜度。
 - 标题和封面文案抛出问题，不把结论写死。
@@ -163,6 +169,7 @@ python3 scripts/run.py publish_pipe.py \
 - HTML 中本地图片文件存在。
 - 正式发布时账号存在且 app_id / app_secret 齐全。
 - `--input` 模式下 Markdown 不含 AI 身份披露黑名单。
+- **高风险关键词软扫描**（warning 级，不阻断）：命中政策/市场预测/敏感时政等词会列出提醒，确认是否需改切口，详见 `prompts/quality-and-risk.md` C 节。
 
 任何一项失败都不要发布。
 
