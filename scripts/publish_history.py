@@ -66,25 +66,28 @@ def check_ai_disclosure(text: str, *, raise_on_hit: bool = True) -> list[tuple[i
 # 规则来源：prompts/quality-and-risk.md C 节。命中应改"对普通人影响"软切口或换题。
 HIGH_RISK_KEYWORDS = [
     # 货币 / 财政 / 监管政策走向
-    "降息", "加息", "货币政策", "财政政策", "监管收紧", "政策转向", "政策信号",
+    "降息", "加息", "降准", "货币政策", "财政政策", "监管收紧", "政策转向", "政策信号", "救市",
     # 市场预测 / 投资建议
-    "抄底", "牛市", "熊市", "涨停", "跌停", "暴跌", "唱多", "唱空", "买入", "卖出", "点位",
+    "抄底", "牛市", "熊市", "涨停", "跌停", "暴跌", "大盘", "唱多", "唱空", "买入", "卖出", "点位", "目标价",
     # 敏感时政 / 地缘 / 社会
-    "地缘", "制裁", "站队", "脱钩", "领导人", "群体事件", "维权", "罢工",
+    "地缘", "制裁", "站队", "脱钩", "领导人", "群体事件", "维权", "罢工", "维稳", "对立",
 ]
 
 
 def check_high_risk(text: str, *, keywords=None) -> list[tuple[int, str, str]]:
     """Soft-scan text for high-risk (politics/finance/sensitive) keywords.
 
-    Warning-only — NEVER raises or blocks. Returns [(line_no, keyword, snippet)].
+    Warning-only — NEVER raises or blocks. Returns [(line_no, keyword, snippet)],
+    deduplicated to the first occurrence of each keyword so warnings stay readable.
     Callers should print these as warnings and ask a human to confirm the angle.
     """
     kws = list(keywords) if keywords is not None else HIGH_RISK_KEYWORDS
+    seen: set[str] = set()
     hits: list[tuple[int, str, str]] = []
     for i, line in enumerate(text.splitlines(), 1):
         for kw in kws:
-            if kw and kw in line:
+            if kw and kw in line and kw not in seen:
+                seen.add(kw)
                 snippet = line.strip()
                 if len(snippet) > 120:
                     snippet = snippet[:120] + "..."

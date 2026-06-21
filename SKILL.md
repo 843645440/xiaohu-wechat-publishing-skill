@@ -40,6 +40,7 @@ metadata:
 - 正文图生成实操（baoyu 框架 + Agnes API 完整示例）读 `references/body-image-baoyu-agnes-workflow.md`。
 - 人物素材库（可复用肖像图）读 `references/portrait-assets-library.md`。
 - 发布参数配置（评论、作者、摘要）读 `references/publish-config-params-2026-05.md`。
+- 早/晚定时任务的定稿提示词读 `references/cron-prompts-2026-06.md`。
 
 ## 运行方式
 

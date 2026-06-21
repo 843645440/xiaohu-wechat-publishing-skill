@@ -486,7 +486,9 @@ def _run_pipe():
         else:
             print("  ⚠ AI 披露声明检查已跳过（--skip-ai-guard）")
         # 高风险关键词软扫描（warning 级，不阻断；见 quality-and-risk.md C 节）
-        print_high_risk_warnings(check_high_risk(md_text))
+        # 标题/封面文案是标题党与敏感词高发区，连同标题一起扫。
+        scan_text = ((args.title or "") + "\n" + md_text)
+        print_high_risk_warnings(check_high_risk(scan_text))
 
     # ── 1. 账号设置（支持多账号列表）──
     accounts_to_publish = []  # list of (name, app_id, app_secret, author)
