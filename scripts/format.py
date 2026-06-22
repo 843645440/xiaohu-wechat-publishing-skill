@@ -325,38 +325,12 @@ def convert_wikilinks(text: str, vault_root: Path, output_dir: Path) -> str:
 
 
 def process_img_markers(text: str, input_dir: Path, output_dir: Path) -> str:
-    """将 <!-- img:filename --> 标记转换为标准 Markdown 图片语法。
+    """保留 <!-- img:filename --> 标记，交给发布阶段统一注入。
 
-    在 md_to_html 之前调用，这样 markdown 引擎会正常处理生成的 ![img](images/xxx) 语法。
-    同时把源图片复制到 output_dir/images/ 目录。
-
-    实现：直接调用 image_injector.inject_markers(mode='md')，保证与其它入口一致。
+    采用 B 方案：排版阶段不再把图位标记预先转成 Markdown 图片，
+    避免与发布阶段基于同一批图片的注入逻辑重复，导致同图重复出现。
     """
-    from image_injector import inject_markers
-
-    images_dir = output_dir / "images"
-    search_paths = [
-        input_dir,
-        input_dir / "images",
-        input_dir / "assets",
-    ]
-    # 也搜索 config.json 里配置的额外路径
-    config_path = SKILL_DIR / "config.json"
-    if config_path.exists():
-        try:
-            _cfg = json.load(open(config_path, encoding="utf-8"))
-            for p in _cfg.get("image_search_paths", []):
-                search_paths.append(Path(p).expanduser())
-        except Exception:
-            pass
-
-    new_text, _stats = inject_markers(
-        text, search_paths,
-        copy_to=images_dir,
-        mode="md",
-        src_prefix="images/",
-    )
-    return new_text
+    return text
 
 
 def copy_markdown_images(text: str, input_dir: Path, output_dir: Path) -> str:

@@ -9,6 +9,16 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class PublishValidationTests(unittest.TestCase):
+    def test_process_img_markers_keeps_markers_for_publish_stage(self):
+        from format import process_img_markers
+
+        sample = "前文\n\n<!-- img:hero.png -->\n\n后文"
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            result = process_img_markers(sample, root, root / "out")
+
+        self.assertIn("<!-- img:hero.png -->", result)
+
     def test_rejects_account_name_as_title(self):
         from publish_pipe import validate_publish_ready
 
