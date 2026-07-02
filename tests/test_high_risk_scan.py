@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from publish_history import check_high_risk, _load_high_risk_keywords
+import publish_history
 
 
 class HighRiskLoadTests(unittest.TestCase):
@@ -79,6 +80,41 @@ class HighRiskFallbackTests(unittest.TestCase):
 
     def test_empty_keywords_no_hits(self):
         self.assertEqual(check_high_risk("降息抄底", keywords=[]), [])
+
+
+class CorruptJsonFallbackTests(unittest.TestCase):
+    """数据文件被改成合法但格式不对的 JSON（list/str/number）时，必须回退不崩溃。"""
+
+    def _with_mock_path(self, content):
+        import tempfile
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
+            f.write(content)
+            path = f.name
+        original = publish_history.HIGH_RISK_KEYWORDS_PATH
+        publish_history.HIGH_RISK_KEYWORDS_PATH = __import__("pathlib").Path(path)
+        try:
+            return _load_high_risk_keywords()
+        finally:
+            publish_history.HIGH_RISK_KEYWORDS_PATH = original
+            __import__("os").unlink(path)
+
+    def test_valid_list_json_falls_back(self):
+        # 合法 JSON 但是个 list（非 dict），应回退不崩溃
+        kws, notes = self._with_mock_path('["降息", "抄底"]')
+        self.assertEqual(kws, list(publish_history._HIGH_RISK_FALLBACK))
+
+    def test_valid_string_json_falls_back(self):
+        kws, _ = self._with_mock_path('"just a string"')
+        self.assertEqual(kws, list(publish_history._HIGH_RISK_FALLBACK))
+
+    def test_dict_missing_keywords_field_falls_back(self):
+        kws, _ = self._with_mock_path('{"version": "1.0"}')
+        self.assertEqual(kws, list(publish_history._HIGH_RISK_FALLBACK))
+
+    def test_malformed_json_falls_back(self):
+        kws, _ = self._with_mock_path('{not valid json')
+        self.assertEqual(kws, list(publish_history._HIGH_RISK_FALLBACK))
+
 
 
 if __name__ == "__main__":

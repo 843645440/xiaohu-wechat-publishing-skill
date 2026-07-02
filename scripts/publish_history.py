@@ -39,28 +39,34 @@ def _load_high_risk_keywords() -> tuple[list[str], dict[str, str]]:
 
     JSON 支持两种元素格式：纯字符串 "降息"，或对象 {"word": "...", "note": "..."}。
     返回 (keywords, notes)：keywords 是词列表，notes 是 word→note 的映射。
-    文件缺失或损坏时回退到 _HIGH_RISK_FALLBACK 并打印 warning。
+    文件缺失、损坏、格式不对（非 dict、脏数据）时一律回退到 _HIGH_RISK_FALLBACK 并打印 warning，
+    保证扫描永远不会因数据文件问题而崩溃。
     """
     notes: dict[str, str] = {}
     if not HIGH_RISK_KEYWORDS_PATH.exists():
         print(f"  ⚠ 高风险关键词文件不存在: {HIGH_RISK_KEYWORDS_PATH}，使用内置最小集",
               file=sys.stderr)
         return list(_HIGH_RISK_FALLBACK), notes
+
+    keywords: list[str] = []
     try:
         data = json.loads(HIGH_RISK_KEYWORDS_PATH.read_text(encoding="utf-8"))
+        # 顶层必须是 dict（含 "keywords" 列表）；合法的 list/str/number 都视为损坏
+        raw_items = data.get("keywords", []) if isinstance(data, dict) else None
+        if raw_items is None:
+            raise ValueError("顶层不是对象或缺少 keywords 字段")
+        for item in raw_items:
+            if isinstance(item, str):
+                keywords.append(item)
+            elif isinstance(item, dict) and "word" in item:
+                keywords.append(item["word"])
+                if item.get("note"):
+                    notes[item["word"]] = item["note"]
+            # 其它格式静默跳过，避免单条脏数据让整个加载失败
     except Exception as e:
         print(f"  ⚠ 高风险关键词文件解析失败 ({e})，使用内置最小集", file=sys.stderr)
         return list(_HIGH_RISK_FALLBACK), notes
 
-    keywords: list[str] = []
-    for item in data.get("keywords", []):
-        if isinstance(item, str):
-            keywords.append(item)
-        elif isinstance(item, dict) and "word" in item:
-            keywords.append(item["word"])
-            if item.get("note"):
-                notes[item["word"]] = item["note"]
-        # 其它格式静默跳过，避免单条脏数据让整个加载失败
     if not keywords:
         print(f"  ⚠ 高风险关键词文件为空，使用内置最小集", file=sys.stderr)
         return list(_HIGH_RISK_FALLBACK), notes

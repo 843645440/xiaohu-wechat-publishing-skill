@@ -200,7 +200,7 @@ def merge_layout_palette(layout_path: Path, palette_path: Path) -> dict:
 
 
 # ── 工具函数 ────────────────────────────────────────────────────────────
-# count_words / extract_title / strip_frontmatter 已抽到 format_utils.py，
+# count_words / extract_title / strip_frontmatter / hex_to_rgb 已抽到 format_utils.py，
 # 便于单元测试。CJK 处理、样式注入等复杂逻辑继续留在本文件。
 
 

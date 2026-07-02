@@ -55,7 +55,7 @@ The pipeline is a chain of single-responsibility scripts, with `publish_pipe.py`
 
 - WeChat credentials are **only** read from `~/.hermes/.env`, parsed in `publish_pipe._load_accounts_from_env()`. Format: `WECHAT_APPID_<NAME>` + `WECHAT_SECRET_<NAME>` (+ optional `WECHAT_AUTHOR_<NAME>`); `<NAME>` lowercased becomes the account key. Never write real `app_id`/`app_secret` into `config.json` or skill files.
 - `config.json` holds non-secret config (workspace dir, default theme, image AI endpoint). `config.example.json` is the template.
-- Image generation uses the **Agnes API** (`AGNES_API_KEY` env, model `agnes-image-2.0-flash`, base `https://apihub.agnes-ai.com/v1/images/generations`).
+- Image generation uses the **Agnes API** (`AGNES_API_KEY` env, model `agnes-image-2.1-flash`, base `https://apihub.agnes-ai.com/v1/images/generations`).
 
 ## Hard rules (enforced in code — do not bypass)
 
