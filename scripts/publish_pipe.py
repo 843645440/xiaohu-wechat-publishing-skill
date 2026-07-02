@@ -291,7 +291,7 @@ def push_draft(token, title, content, thumb_media_id, author="", digest=""):
             "content_source_url": "",
             "thumb_media_id": thumb_media_id,
             "need_open_comment": 1,
-            "only_fans_can_comment": 1,
+            "only_fans_can_comment": 0,
         }]
     }
     body = json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -587,8 +587,9 @@ def _run_pipe():
             "发布前硬校验会拦截，请先补图或删除 marker。", sep="\n",
         )
 
-    # 写回 HTML
-    article_html.write_text(html, encoding="utf-8")
+    # 写回 HTML（dry-run 不写回，保留 markers 供后续正式发布使用）
+    if not args.dry_run:
+        article_html.write_text(html, encoding="utf-8")
     img_count = html.count("<img")
     print(f"  HTML 中共 {img_count} 个 <img> 标签")
 

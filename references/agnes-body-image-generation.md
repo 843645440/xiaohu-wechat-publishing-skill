@@ -15,7 +15,7 @@ curl -X POST https://apihub.agnes-ai.com/v1/images/generations \
   -H "Authorization: Bearer $AGNES_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "agnes-image-2.0-flash",
+    "model": "agnes-image-2.1-flash",
     "prompt": "...",
     "size": "1024x1024",
     "n": 1
@@ -51,14 +51,11 @@ curl -sSL --max-time 60 "<url>" -o output.png
 
 结构化提示词包含：ZONES（布局）、LABELS（标注数据）、COLORS（配色方案）、STYLE（风格描述）、ASPECT（构图比例）。
 
-## 双账号正文图设计原则
+## 双账号独立配图规则
 
-同一个选题给两个账号写不同风格正文图：
+**双账号各自生成各自的配图**，根据文章内容自动选择合适风格。
 
-| 账号 | 风格 | 正文图定位 |
-|------|------|-----------|
-| xiaocong / 熵增时刻 | 解释型、信息密度高 | infographic / comparison / framework |
-| yeluzi / 思想的野路子 | 情绪型、讽刺感 | scene（带讽刺元素） |
+风格自动匹配：根据文章内容从三大 baoyu skill（article-illustrator / comic / infographic）中选择最合适的风格组合。详见 `references/baoyu-style-index.md`。
 
 ## Python 批量生成模板
 
@@ -75,7 +72,7 @@ headers = {
 }
 
 def generate(prompt, filename):
-    payload = {"model": "agnes-image-2.0-flash", "prompt": prompt, "size": "1024x1024", "n": 1}
+    payload = {"model": "agnes-image-2.1-flash", "prompt": prompt, "size": "1024x1024", "n": 1}
     resp = requests.post(API_URL, headers=headers, json=payload, timeout=420)
     result = resp.json()
     if resp.status_code == 200 and "data" in result:

@@ -2,7 +2,7 @@
 name: xiaohu-wechat-publishing
 description: |
   Use when working with WeChat Official Account: topic planning, writing, formatting, cover/body visuals, and draft-box publishing. Triggers: 写公众号, 微信排版, 公众号文章, 推草稿箱, 发公众号, 熵增时刻, 思想的野路子丶, or packaging an article for WeChat.
-version: 4.7.0
+version: 4.8.0
 author: Hermes curator
 license: MIT
 metadata:
@@ -31,7 +31,7 @@ metadata:
 - **写任何正文前必读 `prompts/quality-and-risk.md`**（信息增量硬标准 + 去标题党 + 风险软规避 + 去同质化）。
 - 写正文前读 `prompts/writing-persona.md` 和 `prompts/markdown-elements.md`。
 - AI / 科技 / 产业稿额外读 `references/ai-tech-writing-guide.md`。
-- 做封面或正文图前读 `prompts/visual-design.md`。
+- 做封面或正文图前读 `references/baoyu-style-index.md`（三大 baoyu skill 风格索引 + 自动匹配规则）。
 - 需要 Swiss Minimal 封面参数时读 `references/swiss-cover-usage.md`。
 - 排查字体方框字读 `references/image-font-tofu-debug-2026-05.md`。
 - 查完整历史规则或旧流程时才读 `references/legacy-skill-full-2026-05.md`。
@@ -85,6 +85,15 @@ python3 scripts/run.py publish_pipe.py --input article.md --cover cover.png --ac
 
 **⚠️ 图位标记硬规则**：Markdown 里写了 `<!-- img:xxx -->` 就必须生成对应图片。如果不确定是否配图，**先不加标记**，排版完成后再决定是否插图。Dry-run 会拦截未解析的标记，但事后补图比一开始就不加更浪费。
 
+**⚠️ 正文图相似性问题（待解决）**：用户反馈最近几天的正文图"看起来都是同一张"。md5 校验显示文件确实不同，但视觉上可能高度相似。可能原因：
+- 提示词太泛化（如"科技、数据、连接"），导致 Agnes 生成风格雷同
+- 需要在 cron prompt 里强制要求每篇文章的正文图提示词必须基于文章具体主题
+
+如果用户再次反馈此问题，优先检查：
+1. cron 执行时是否真的调用了 Agnes API（看 agent.log 里的 curl 命令）
+2. 每次生成的提示词是否足够具体、差异化
+3. 是否需要在 `references/cron-prompts-2026-06.md` 里加更严格的提示词要求
+
 封面默认用 Swiss Minimal，适合现成稿和快速发布：
 
 ```bash
@@ -95,24 +104,32 @@ python3 scripts/run.py render_cover_swiss.py \
   --subtitle '不是脆弱，是不甘平庸的信号' \
   --issue 'VOL.05 / 2026' \
   --topic '成长 · 内耗 · 野心' \
-  --out cover.png
+  --out /absolute/path/to/cover.png
 ```
+
+**⚠️ `--out` 必须用绝对路径。** 当从 job 目录（如 `~/.hermes/workspaces/wechat/jobs/2026-06-23-evening/yeluzi/`）运行时，相对路径 `--out cover.png` 会导致 Playwright 报 `net::ERR_INVALID_URL at file://cover.html/`。始终传入完整绝对路径。
 
 需要完整商业编辑风封面时，用 `render_editorial_cover.py`。
 
-**正文图默认风格：baoyu-comic 知识漫画**。用户认为扁平化信息图（flat infographic）"廉价"，正文图首选知识漫画风格（manga + dramatic/neutral tone），用画面叙事，不用文字说教。
+**正文图风格自动匹配**：根据文章内容从三大 baoyu skill（article-illustrator / comic / infographic）中自动选择最合适的风格组合。详见 `references/baoyu-style-index.md`。
 
-- **共用配图规则**：双账号文章共用同一套配图，按小聪调性生成（dramatic/neutral，冷静解释型），yeluzi 不单独生成配图。
-- **宝玉框架提示词**：加载 `baoyu-comic` skill，用 ZONES / LABELS / COLORS / STYLE / ASPECT 结构组织提示词。
-- **LABELS 取舍**：结构化标签里只保留 1-2 个核心中文主题词（如"百亿补贴"）作为画面元素，其余数据、术语用英文关键词或视觉符号（箭头、图表、问号）代替，避免 Agnes 生成乱码中文。
-- **中文字硬规则**：Agnes 模型对中文极不稳定。**提示词中最多出现一个主题词**，其余信息用画面元素、表情、构图表达。不要在提示词里要求多行中文说明、对话框、标签文字。如需文字信息，用 Python/PIL 后期叠加。
+- **匹配流程**：分析文章内容信号 → 查 `baoyu-style-index.md` 的"内容类型 → 风格匹配表" → 选择推荐 Skill + Type/Layout + Style/Preset → 加载对应 baoyu skill 构造提示词。
+- **生成模型**：统一使用 **Agnes Image 2.1 Flash**（`agnes-image-2.1-flash`）。
+- **独立配图规则**：双账号各自生成各自的配图，根据文章内容自动选择合适风格。
+- **中文字硬规则**：Agnes 模型对中文极不稳定。**提示词中最多出现 1-2 个中文主题词**，其余信息用英文关键词、画面元素、表情、构图表达。不要在提示词里要求多行中文说明、对话框、标签文字。如需精确中文文字，用 Python/PIL 后期叠加。
 - **默认比例 1024x576（16:9 宽图）**，适合公众号正文嵌入。竖图场景用 576x1024。
 - **Agnes API 调用规范**：
   - Base URL：`https://apihub.agnes-ai.com/v1/images/generations`（注意是 `apihub` 不是 `api`）
-  - 模型固定：`agnes-image-2.0-flash`
+  - 模型固定：`agnes-image-2.1-flash`
   - 环境变量：`AGNES_API_KEY`
   - 超时 420 秒；返回 URL 用 `curl -sSL --max-time 60` 下载
   - 下载失败重试一次
+  - **⚠️ 代理绕过**：系统环境设置了 `https_proxy=http://127.0.0.1:7890`，会导致 Agnes API 的 SSL 握手失败（`SSL_ERROR_SYSCALL`）。所有 curl 调用 Agnes API 时必须加 `--noproxy '*'`，包括生成请求和图片下载。示例：
+    ```bash
+    curl -sSL --max-time 420 --noproxy '*' \
+      -X POST "https://apihub.agnes-ai.com/v1/images/generations" \
+      -H "Authorization: Bearer $AGNES_KEY" ...
+    ```
 
 ## 排版快路径
 
@@ -130,7 +147,79 @@ python3 scripts/run.py format.py --input article.md --gallery --recommend newspa
 
 排版输出的正式发布文件是 `article.html`，不是 `preview.html`。
 
+**⚠️ `format.py --output` 输出结构陷阱**：当使用 `--output /path/to/article.html` 时，format.py 不会创建一个名为 `article.html` 的文件，而是创建一个**目录** `article.html/`，内部结构为 `article.html/article/article.html` + `article.html/preview.html`。这会导致后续 `publish_pipe.py --dir` 失败（报 `IsADirectoryError`）。
+
+**正确做法**：
+1. **推荐**：不传 `--output`，让 format.py 输出到默认的 `format/article/` 子目录，然后手动复制：
+   ```bash
+   python3 scripts/run.py format.py --input /job/dir/article.md --theme newspaper
+   # 输出在 /job/dir/format/article/article.html
+   cp /job/dir/format/article/article.html /job/dir/article.html
+   rm -rf /job/dir/format
+   ```
+2. **或者**：传 `--output` 为一个目录名（不是文件名），然后手动提取：
+   ```bash
+   python3 scripts/run.py format.py --input article.md --output /job/dir/formatted --theme newspaper
+   # 输出在 /job/dir/formatted/article/article.html
+   mv /job/dir/formatted/article/article.html /job/dir/article.html
+   rm -rf /job/dir/formatted
+   ```
+3. **最简路径**：直接用 `publish_pipe.py --input article.md --job-dir /job/dir`，它会自动处理排版+发布，无需手动处理 format.py 输出结构。
+
 ## 发布快路径
+
+**评论设置**：默认开启"所有人可评论"（`only_fans_can_comment: 0`）。如需改回"仅关注者可评论"，需修改 `scripts/publish_pipe.py` 中的 `push_draft()` 函数。
+
+### `--input --job-dir` 模式（cron 任务推荐用这个）
+
+**这是 cron 任务的最简路径。** 一条命令完成排版 + 图位注入 + 发布，无需手动复制文件。
+
+```bash
+# dry-run 校验
+python3 scripts/run.py publish_pipe.py \
+  --input /abs/path/to/job/article.md \
+  --cover /abs/path/to/job/cover.png \
+  --job-dir /abs/path/to/job \
+  --account yeluzi \
+  --dry-run
+
+# 正式发布
+python3 scripts/run.py publish_pipe.py \
+  --input /abs/path/to/job/article.md \
+  --cover /abs/path/to/job/cover.png \
+  --job-dir /abs/path/to/job \
+  --account yeluzi
+```
+
+排版输出自动写入 `<job-dir>/format/article/`，图片注入和发布都自动处理。
+
+**⚠️ `--cover` 和 `--images` 必须用绝对路径。** 相对路径会被解析为相对于当前工作目录，而不是 job 目录。
+
+### `--dir` 模式（已有排版 HTML 时用）
+
+`--dir` 模式要求 job 目录里已经有 `article.html`（在目录根层级，不是 `article/article.html` 子目录）。适用于跳过排版、直接发布已有 HTML 的场景。
+
+```bash
+python3 scripts/run.py publish_pipe.py \
+  --dir /abs/path/to/job \
+  --cover /abs/path/to/job/cover.png \
+  --account yeluzi
+```
+
+**⚠️ `--dir` 模式下 `--cover` 必须用绝对路径。** 相对路径会被解析为相对于 skill 目录（`~/.hermes/skills/wechat/xiaohu-wechat-publishing/`），而不是 job 目录。
+
+**⚠️ `article.html` 位置陷阱**：`format.py` 输出到 `<job-dir>/article/article.html`（子目录内），但 `--dir` 模式要求 `<job-dir>/article.html`（根层级）。如果 cron 任务指示用 `--dir` 模式，必须先跑 format.py 再手动复制：
+```bash
+# format.py 输出到子目录
+python3 scripts/run.py format.py --input /job-dir/article.md --output /job-dir --theme newspaper --no-open
+# 复制到根层级
+cp /job-dir/article/article.html /job-dir/article.html
+# 然后再跑 --dir 模式
+python3 scripts/run.py publish_pipe.py --dir /job-dir --cover /job-dir/cover.png --account yeluzi
+```
+或者直接用 `--input --job-dir` 模式跳过这个步骤（见上方"排版快路径"的最简路径）。
+
+### `--input` 模式（手动排版用）
 
 先 dry-run：
 
@@ -149,6 +238,20 @@ python3 scripts/run.py publish_pipe.py \
   --input article.md \
   --cover cover.png \
   --account xiaocong
+```
+
+**⚠️ `--images` 多图片必须空格分隔**（argparse `nargs='*'`），**不要用逗号**：
+
+```bash
+# 正确
+python3 scripts/run.py publish_pipe.py \
+  --input article.md \
+  --cover cover.png \
+  --images body_01.png body_02.png \
+  --account yeluzi
+
+# 错误（逗号分隔会被当成一个路径，导致全部图片找不到）
+--images body_01.png,body_02.png
 ```
 
 双账号：
@@ -228,6 +331,8 @@ python3 scripts/run.py wechat_pipeline.py publish --dir ~/.hermes/workspaces/wec
 
 ## 定时任务故障排查
 
+**Skill 加载失败 "skill(s) not found"**：如果 cron 任务启动时报告 `xiaohu-wechat-publishing` skill 未找到，但文件实际存在于 `~/.hermes/skills/wechat/xiaohu-wechat-publishing/`，原因是 skill 名称歧义——存在多个同名/近似副本（backup、archived-v1），导致 `skill_view(name='xiaohu-wechat-publishing')` 拒绝猜测。解决：直接用 `skill_view(name='wechat/xiaohu-wechat-publishing')` 或 bare name `skill_manage(action='patch', name='xiaohu-wechat-publishing')` 可以绕过歧义。如果仍然失败，跳过 skill 加载，直接读取 `prompts/quality-and-risk.md`、`prompts/writing-persona.md`、`prompts/markdown-elements.md` 等文件继续工作——这些文件就是 skill 的核心内容。
+
 **"status: ok" 不等于执行成功。** Cron 任务可能模型在跑、输出文件在写，但全程没有调用任何实际工具（写作脚本、发布脚本一个都没跑）。排查步骤：
 
 1. **看产物是否存在**：检查 `~/.hermes/workspaces/wechat/jobs/<当天日期-am|evening>/` 目录是否创建、里面有没有 `xiaocong/` 和 `yeluzi/` 子目录、`article.md` / `cover.png` / `article.html` 是否存在。
@@ -264,33 +369,68 @@ python3 scripts/run.py wechat_pipeline.py publish --dir ~/.hermes/workspaces/wec
 - 风格要求：少废话、直接给成品；可以详细，但不要聊天腔解释。
 - 若用户明确说“不要分析，只整理规则”，则禁止混入原因分析、优化建议、批评结论。
 
-## 正文配图去重校验（新坑位）
+## ⚠️ 用户自带截图/图片的文章发布（高优先级）
 
-当任务生成了 1-2 张正文图后，发布前除了检查 `<!-- img:... -->` marker 是否清空，还要额外检查最终 `article.html` 里**同一张正文图是否被重复插入两次**。
+**⚠️ 硬规则：用户提供截图时，必须将图片实际嵌入文章，不要只用文字描述截图内容。** 这是用户明确纠正过的错误——写"首页有xxx按钮"而不放截图 = 白做。用户会直接问"截图呢？"。
 
-最常见的错误形态：
-- 实际只生成了 2 张唯一图片；
-- 但最终 HTML 里变成 4 个 `<img>`；
-- 表现为每张正文图各出现两次（前文插一次，后文又插一次）。
+**完整工作流程**：
 
-校验要求：
-- 检查最终 HTML 的正文 `<img>` 引用；
-- 若唯一正文图文件数只有 1-2 个，但每个文件名重复出现两次，判定为**重复注入 bug**；
-- 命中后不要发布，先排查注入链路是否发生了“正文已有插图 + 后置 section 再插一轮”的双重注入。
+1. **复制图片到文章目录**（从 `~/.hermes/image_cache/` 复制到文章工作目录，用序号命名）：
+   ```bash
+   cp ~/.hermes/image_cache/img_xxx.jpg /job/dir/01-homepage.jpg
+   cp ~/.hermes/image_cache/img_yyy.jpg /job/dir/02-themes.jpg
+   ```
 
-这条校验优先级高于“图片存在即可发布”；图片存在但重复注入，仍视为发布前失败。
+2. **在 Markdown 中用 `<!-- img:xxx -->` 标记图位**，放在对应描述段落后面：
+   ```markdown
+   打开网站，首页很简洁...
+   <!-- img:01-homepage.jpg -->
+   
+   点击"浏览风格"，可以看到所有排版风格...
+   <!-- img:02-themes.jpg -->
+   ```
+
+3. **发布时通过 `--images` 传入所有图片的绝对路径**（空格分隔，不是逗号）：
+   ```bash
+   python3 scripts/run.py publish_pipe.py \
+     --input /job/dir/article.md \
+     --cover /job/dir/cover.png \
+     --images /job/dir/01-homepage.jpg /job/dir/02-themes.jpg /job/dir/03-format.jpg \
+     --account xiaocong
+   ```
+
+4. **自检清单**：发布前确认 (a) 每个 `<!-- img:xxx -->` 都有对应文件存在，(b) `--images` 参数包含了所有截图的绝对路径，(c) 文章里不是只用文字描述截图内容。
+
+## 正文图注入架构（重要）
+
+**图片注入只允许在发布阶段统一处理一次。** 排版阶段（`format.py`）不再处理 `<!-- img:... -->` 标记，而是保留原样交给 `publish_pipe.py`。
+
+### 为什么这样设计
+2026-06 发现一个重复注入 bug：
+- `format.py` 先把 marker 转成 Markdown 图片 `![img](...)`
+- `publish_pipe.py` 发现 HTML 里没有 marker 了，但命令行传了 `--images`
+- 于是按位置再插一轮
+- 结果：同一张图出现两次（正文插一次，section 再插一次）
+
+### 修复方案（B 方案）
+- `format.py` 的 `process_img_markers()` 现在直接返回原文，不转换 marker
+- `publish_pipe.py` 在排版完成后统一调用 `image_injector.inject()` 处理所有图片
+- 这样保证每张图片只注入一次
+
+### 校验要求
+发布前检查最终 `article.html`：
+- 若唯一正文图文件数只有 1-2 个，但每个文件名重复出现两次，判定为**重复注入 bug**
+- 命中后不要发布，先排查注入链路
+
+### Dry-run 写回 bug（2026-06-25 修复）
+`publish_pipe.py` 在图片注入后会写回 `article.html`。如果 dry-run 也写回，markers 就被替换成了 `<img>` 标签。后续正式发布时 `article.html` 里已无 markers，`image_injector.inject()` 会走 `inject_by_position()` 按位置再插一轮 → 每张图片出现两次。
+
+**修复**：dry-run 模式下不写回 `article.html`（`if not args.dry_run:` 守卫）。
+
+**诊断方法**：dry-run 后检查 `article.html` 是否仍包含 `<!-- img:xxx -->` 标记。如果没有了，说明写回发生了，正式发布会产生重复图。此时需要重新 `format.py` 生成干净的 `article.html` 再发布。
+
+**操作规则**：dry-run 和正式发布之间不要手动编辑 `article.html`。如果 dry-run 发现问题需要修，修完 Markdown 后重新走 format → copy → dry-run → publish 全流程。
 
 ## Output Contract
 
-当用户要求“整理规则 / 做成文档 / 供转发给别的 Agent 审核”时，按下面方式交付：
-
-- **直接产出可转发 Markdown 文档**，不要只在聊天里临时总结。
-- **优先写入实体 `.md` 文件**，并在回复里明确给出绝对路径，方便用户转发或作为附件发送。
-- **文档内容要自解释**：默认把本地脚本名、工具名、文件名翻译成“这是做什么的 / 它负责什么操作 / 它受什么规则约束”，不要假设外部读者认识当前仓库结构。
-- **区分规则层级**：明确标出哪些是通用 skill 规则，哪些是定时任务/cron 追加的任务规则，避免把两者混成一层。
-- **少废话、少过程描述**：用户此类需求要的是“可直接转发的成品”，不是你边解释边补充。
-- 如果用户后续还问“文档路径在哪 / 能不能直接发”，说明上一次交付不完整；下次默认同时给出文档路径。
-
-## Output Contract
-
-默认先给可交付结果，再说明停在哪一步。失败时先讲失败原因，再给下一步。公众号任务优先保证“可发”，再优化细节。
+默认先给可交付结果，再说明停在哪一步。失败时先讲失败原因，再给下一步。公众号任务优先保证"可发"，再优化细节。

@@ -6,7 +6,7 @@
 2. 用 ZONES / LABELS / COLORS / STYLE / ASPECT 框架组织视觉构思
 3. 将框架转化为一段 Agnes 可执行的英文 prompt（LABELS 中的中文主题词最多 1-2 个）
 4. 调用 Agnes API 生成 1024x576 宽图
-5. 两个账号共用配图，不分别生成
+5. 两个账号各自生成各自的配图
 
 ## 框架结构
 
@@ -77,7 +77,7 @@ RESPONSE=$(curl -X POST https://apihub.agnes-ai.com/v1/images/generations \
   -H "Authorization: Bearer $AGNES_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "agnes-image-2.0-flash",
+    "model": "agnes-image-2.1-flash",
     "prompt": "<上面构造好的 prompt>",
     "size": "1024x576",
     "n": 1

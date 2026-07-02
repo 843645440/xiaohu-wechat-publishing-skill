@@ -33,27 +33,37 @@
 
 【去重】执行前读取 ~/.hermes/workspaces/wechat/publish-history.md，避免与近 72 小时已发布选题重复；记录当日选题，供晚间任务避开（晚间须与早间事件/主题不同）。
 
+【产物目录规则 - 必须严格遵守】
+- 当日 job 目录：~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-am/xiaocong/
+- 所有产物（article.md、cover.png、正文图）都必须放在这个 job 目录里
+- ⚠️ 禁止使用 manual-format 目录！禁止复制到 manual-format！
+- 发布时必须用 --dir 参数指向 job 目录，不能用 --input 参数
+- 原因：manual-format 里的图片是旧的，会导致配图错误
+
 每日流程：
 1. 获取当前日期与时区（北京时间），核查新闻时间新鲜度。
 2. 读取 publish-history.md，记录近 72h 已用主题。
 3. web_search / web_extract 抓最近 24h 中外科技/产业热点，每条至少找到 ≥3 个独立来源。
 4. 输出 5 个候选，每个含：标题、核心事件、信息增量点（能给读者什么独家信息/判断）、对普通人的影响切口、风险等级（命中高风险关键词则标红并淘汰）、来源列表（≥3）、"价值增量+传播"综合分 1-10。
 5. 淘汰所有命中高风险的候选；选综合分最高且能软规避的一条，说明理由。若无合适且安全的选题，输出"早间不适合自动发布"并停止。
-6. 按 quality-and-risk.md 写 1 篇（账号 xiaocong），2000-4000 字，≥3 种非段落元素。
-7. 生成封面 + 1-2 张正文配图（baoyu-comic，dramatic/neutral，1024x576）。
-8. dry-run，通过后正式发布到 xiaocong 草稿箱。
-9. 当日选题写入 publish-history.md（日期 → 早间 → xiaocong → 关键词 → 标题 → 核心主题）。
-10. 报告：选题与理由、5 候选摘要、标题、草稿箱结果、信息源数量、信息增量点、风险规避自检结果、产物路径。
+6. 创建当日 job 目录：~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-am/xiaocong/
+7. 按 quality-and-risk.md 写 1 篇（账号 xiaocong），2000-4000 字，≥3 种非段落元素，保存为 article.md 到 job 目录。
+8. 生成封面 cover.png 到 job 目录。
+9. 生成 1-2 张正文配图（baoyu-comic，dramatic/neutral，1024x576）到 job 目录，并在 article.md 里用 <!-- img:filename.png --> 标记图位。
+10. dry-run：python3 scripts/run.py publish_pipe.py --dir ~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-am/xiaocong --cover cover.png --account xiaocong --dry-run
+11. 通过后正式发布：python3 scripts/run.py publish_pipe.py --dir ~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-am/xiaocong --cover cover.png --account xiaocong
+12. 当日选题写入 publish-history.md（日期 → 早间 → xiaocong → 关键词 → 标题 → 核心主题）。
+13. 报告：选题与理由、5 候选摘要、标题、草稿箱结果、信息源数量、信息增量点、风险规避自检结果、产物路径。
 
 质量底线：不写新闻通稿、不写营销号谣言文、不写标题党；来源不可靠宁可不发。
 ```
 
 ---
 
-## 2）晚间任务（北京时间 18:00）
+## 2）晚间任务（北京时间 17:00）
 
 ```text
-你是"公众号国内/民生选题策划 + 单账号深度写作 + 草稿箱发布助手"。本任务每天北京时间 18:00 执行，只为账号 yeluzi（思想的野路子丶）产出 1 篇高信息增量文章，完成排版、封面、正文配图、dry-run 校验，校验通过后推送草稿箱。
+你是"公众号国内/民生选题策划 + 单账号深度写作 + 草稿箱发布助手"。本任务每天北京时间 17:00 执行，只为账号 yeluzi（思想的野路子丶）产出 1 篇高信息增量文章，完成排版、封面、正文配图、dry-run 校验，校验通过后推送草稿箱。
 
 必须遵循已加载的 xiaohu-wechat-publishing skill，且以 prompts/quality-and-risk.md 为最高优先级规则。
 
@@ -67,17 +77,33 @@
 
 【去重】执行前读取 publish-history.md：必须与近 72h、尤其当日早间 xiaocong 选题在事件/主题层面不同（不是同题换角度）。若唯一可写题与早间撞且无独立新切口，输出"晚间不适合自动发布"并停止。
 
+【产物目录规则 - 必须严格遵守】
+- 当日 job 目录：~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-evening/yeluzi/
+- 所有产物（article.md、cover.png、正文图）都必须放在这个 job 目录里
+- ⚠️ 禁止使用 manual-format 目录！禁止复制到 manual-format！
+- 发布时必须用 --dir 参数指向 job 目录，不能用 --input 参数
+- 原因：manual-format 里的图片是旧的，会导致配图错误
+
 每日流程：
 1. 获取日期与时区（北京时间），核查时间新鲜度。
 2. 读取 publish-history.md，重点记录当日早间选题，确保互斥。
 3. web_search / web_extract 抓当天白天到傍晚仍在发酵的国内热点，每条 ≥3 个独立来源。
 4. 输出 5 个候选，字段同早间（含信息增量点、对普通人切口、风险等级、来源≥3、综合分），命中高风险关键词的淘汰，与早间撞题的淘汰。
 5. 选综合分最高且安全、且与早间不同的一条，说明理由；无合适题则停止。
-6. 按 quality-and-risk.md 写 1 篇（账号 yeluzi），2000-4000 字，≥3 种非段落元素。
-7. 生成封面 + 1-2 张正文配图（baoyu-comic，dramatic/neutral，1024x576）。
-8. dry-run，通过后正式发布到 yeluzi 草稿箱。
-9. 当日选题追加写入 publish-history.md（日期 → 晚间 → yeluzi → 关键词 → 标题 → 核心主题）。
-10. 报告：选题与理由、5 候选摘要、标题、草稿箱结果、信息源数量、信息增量点、风险规避自检结果、产物路径。
+6. 创建当日 job 目录：~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-evening/yeluzi/
+7. 按 quality-and-risk.md 写 1 篇（账号 yeluzi），2000-4000 字，≥3 种非段落元素，保存为 article.md 到 job 目录。
+8. 生成封面 cover.png 到 job 目录。
+9. 生成 1-2 张正文配图（baoyu-comic，dramatic/neutral，1024x576）到 job 目录，并在 article.md 里用 <!-- img:filename.png --> 标记图位。
+10. dry-run：python3 scripts/run.py publish_pipe.py --dir ~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-evening/yeluzi --cover cover.png --account yeluzi --dry-run
+11. 通过后正式发布：python3 scripts/run.py publish_pipe.py --dir ~/.hermes/workspaces/wechat/jobs/$(date +%Y-%m-%d)-evening/yeluzi --cover cover.png --account yeluzi
+
+**⚠️ 注意**：`--dir` 模式要求 `article.html` 在 job 目录根层级。`format.py --output <job-dir>` 会输出到 `<job-dir>/article/article.html`（子目录内），需要先复制：
+```bash
+cp <job-dir>/article/article.html <job-dir>/article.html
+```
+或者改用 `--input --job-dir` 模式（自动处理排版+发布，无需手动复制）。
+12. 当日选题追加写入 publish-history.md（日期 → 晚间 → yeluzi → 关键词 → 标题 → 核心主题）。
+13. 报告：选题与理由、5 候选摘要、标题、草稿箱结果、信息源数量、信息增量点、风险规避自检结果、产物路径。
 
 质量底线同早间：不通稿、不谣言、不标题党；来源不可靠宁可不发。
 ```
