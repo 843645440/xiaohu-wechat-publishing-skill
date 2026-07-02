@@ -24,6 +24,7 @@ from pathlib import Path
 import markdown
 
 from workspace import ensure_workspace, selection_file, workspace_root
+from format_utils import count_words, extract_title, strip_frontmatter, hex_to_rgb
 
 # ── 脚注占位符（UUID 防冲突）──────────────────────────────────────────
 _FN_PREFIX = f"__FN_{uuid.uuid4().hex[:8]}_"
@@ -199,37 +200,8 @@ def merge_layout_palette(layout_path: Path, palette_path: Path) -> dict:
 
 
 # ── 工具函数 ────────────────────────────────────────────────────────────
-def count_words(text: str) -> int:
-    """统计中文文章字数（中文字符 + 英文单词）"""
-    clean = re.sub(r"[#*`\[\]()!>|{}_~\-]", "", text)
-    clean = re.sub(r"\n+", "\n", clean)
-    chinese = len(re.findall(r"[\u4e00-\u9fff]", clean))
-    english = len(re.findall(r"[a-zA-Z]+", clean))
-    return chinese + english
-
-
-def extract_title(content: str, filepath: Path) -> str:
-    """从内容或文件名提取标题"""
-    # 从 frontmatter 提取
-    fm = re.match(r"^---\n(.*?)\n---", content, re.DOTALL)
-    if fm:
-        for line in fm.group(1).split("\n"):
-            if line.startswith("title:"):
-                return line.split(":", 1)[1].strip().strip('"').strip("'")
-    # 从 H1 提取
-    h1 = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
-    if h1:
-        return h1.group(1).strip()
-    # 从文件名提取
-    name = filepath.stem
-    name = re.sub(r"^\d{4}-\d{2}-\d{2}-?", "", name)
-    name = re.sub(r"-(公众号|小红书|微博)$", "", name)
-    return name or filepath.stem
-
-
-def strip_frontmatter(content: str) -> str:
-    """去掉 YAML frontmatter"""
-    return re.sub(r"^---\n.*?\n---\n*", "", content, flags=re.DOTALL)
+# count_words / extract_title / strip_frontmatter 已抽到 format_utils.py，
+# 便于单元测试。CJK 处理、样式注入等复杂逻辑继续留在本文件。
 
 
 def fix_cjk_spacing(text: str) -> str:
@@ -883,12 +855,6 @@ def _basic_syntax_highlight(code_html: str) -> str:
     return code_html
 
 
-def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
-    """将 #RRGGBB 转为 (r, g, b) 元组"""
-    h = hex_color.lstrip("#")
-    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
-
-
 def _inject_container_styles(html: str, theme: dict) -> str:
     """为围栏容器注入内联样式
 
@@ -896,7 +862,7 @@ def _inject_container_styles(html: str, theme: dict) -> str:
     """
     # 获取主题 accent 色，用于对话右气泡背景
     accent_hex = theme.get("colors", {}).get("accent", "#07C160")
-    r, g, b = _hex_to_rgb(accent_hex)
+    r, g, b = hex_to_rgb(accent_hex)
     right_bubble_bg = f"rgba({r},{g},{b},0.08)"
 
     # ── dialogue 容器 ──

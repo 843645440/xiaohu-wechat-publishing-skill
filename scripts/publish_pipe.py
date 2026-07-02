@@ -471,20 +471,16 @@ def _run_pipe():
     parser.add_argument("--job-dir", help="本次任务目录；排版输出会写入该目录下的 format/")
     parser.add_argument("--output-dir", help="排版输出根目录；未设置时读取 config.output_dir")
     parser.add_argument("--dry-run", action="store_true", help="只做本地排版与校验，不触网、不上传、不推送")
-    parser.add_argument("--skip-ai-guard", action="store_true",
-                        help="跳过 AI 披露声明黑名单检查（不推荐；默认禁用）")
     args = parser.parse_args()
 
     # ── 0. 解析封面（智能默认）──
     cover_path = _resolve_cover(args.cover, args.input, args.dir)
 
-    # ── 0.5 AI 披露声明硬检查（用户规则）──
+    # ── 0.5 AI 披露声明硬检查（不可绕过的发布前硬门禁）──
     if args.input:
         md_text = Path(args.input).expanduser().resolve().read_text(encoding="utf-8")
-        if not args.skip_ai_guard and not os.environ.get("HERMES_WECHAT_SKIP_AI_GUARD"):
-            check_ai_disclosure(md_text, raise_on_hit=True)
-        else:
-            print("  ⚠ AI 披露声明检查已跳过（--skip-ai-guard）")
+        # AI 披露扫描为发布前硬门禁，不可跳过（原 --skip-ai-guard 已移除）。
+        check_ai_disclosure(md_text, raise_on_hit=True)
         # 高风险关键词软扫描（warning 级，不阻断；见 quality-and-risk.md C 节）
         # 标题/封面文案是标题党与敏感词高发区，连同标题一起扫。
         scan_text = ((args.title or "") + "\n" + md_text)

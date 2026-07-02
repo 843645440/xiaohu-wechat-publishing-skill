@@ -22,6 +22,51 @@ from pathlib import Path
 from workspace import ensure_workspace, workspace_root
 
 
+# ── 路径 ──────────────────────────────────────────────────────────────
+SCRIPT_DIR = Path(__file__).parent
+SKILL_DIR = SCRIPT_DIR.parent
+HIGH_RISK_KEYWORDS_PATH = SKILL_DIR / "data" / "high-risk-keywords.json"
+
+# 文件缺失/损坏时的内置最小回退集，保证扫描不会因数据文件丢失而失效。
+_HIGH_RISK_FALLBACK = [
+    "降息", "加息", "抄底", "牛市", "熊市",
+    "地缘", "制裁", "领导人",
+]
+
+
+def _load_high_risk_keywords() -> tuple[list[str], dict[str, str]]:
+    """从 data/high-risk-keywords.json 加载关键词。
+
+    JSON 支持两种元素格式：纯字符串 "降息"，或对象 {"word": "...", "note": "..."}。
+    返回 (keywords, notes)：keywords 是词列表，notes 是 word→note 的映射。
+    文件缺失或损坏时回退到 _HIGH_RISK_FALLBACK 并打印 warning。
+    """
+    notes: dict[str, str] = {}
+    if not HIGH_RISK_KEYWORDS_PATH.exists():
+        print(f"  ⚠ 高风险关键词文件不存在: {HIGH_RISK_KEYWORDS_PATH}，使用内置最小集",
+              file=sys.stderr)
+        return list(_HIGH_RISK_FALLBACK), notes
+    try:
+        data = json.loads(HIGH_RISK_KEYWORDS_PATH.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"  ⚠ 高风险关键词文件解析失败 ({e})，使用内置最小集", file=sys.stderr)
+        return list(_HIGH_RISK_FALLBACK), notes
+
+    keywords: list[str] = []
+    for item in data.get("keywords", []):
+        if isinstance(item, str):
+            keywords.append(item)
+        elif isinstance(item, dict) and "word" in item:
+            keywords.append(item["word"])
+            if item.get("note"):
+                notes[item["word"]] = item["note"]
+        # 其它格式静默跳过，避免单条脏数据让整个加载失败
+    if not keywords:
+        print(f"  ⚠ 高风险关键词文件为空，使用内置最小集", file=sys.stderr)
+        return list(_HIGH_RISK_FALLBACK), notes
+    return keywords, notes
+
+
 AI_DISCLOSURE_PATTERNS = [
     re.compile(r"本文(由|经|是).{0,8}(AI|人工智能|大模型|GPT|Claude|Hermes|机器人).{0,20}(协助|辅助|生成|撰写|创作|写作|完成|编辑|参与|润色)"),
     re.compile(r"(AI|人工智能).{0,8}(协助|辅助).{0,8}(撰写|生成|写作|创作)"),
@@ -54,8 +99,7 @@ def check_ai_disclosure(text: str, *, raise_on_hit: bool = True) -> list[tuple[i
         for ln, sn in hits:
             print(f"  行 {ln}: {sn}", file=sys.stderr)
         print(
-            "\n  → 请删除上述内容后再发布。",
-            "若确认是误报，可设置环境变量 HERMES_WECHAT_SKIP_AI_GUARD=1 跳过（不推荐）。",
+            "\n  → 请删除上述内容后再发布。AI 披露扫描为发布前硬门禁，不可跳过。",
             sep="\n", file=sys.stderr,
         )
         raise SystemExit(2)
@@ -63,34 +107,35 @@ def check_ai_disclosure(text: str, *, raise_on_hit: bool = True) -> list[tuple[i
 
 
 # 高风险关键词（政治/财经/敏感）软扫描——命中只告警、不阻断。
-# 规则来源：prompts/quality-and-risk.md C 节。命中应改"对普通人影响"软切口或换题。
-HIGH_RISK_KEYWORDS = [
-    # 货币 / 财政 / 监管政策走向
-    "降息", "加息", "降准", "货币政策", "财政政策", "监管收紧", "政策转向", "政策信号", "救市",
-    # 市场预测 / 投资建议
-    "抄底", "牛市", "熊市", "涨停", "跌停", "暴跌", "大盘", "唱多", "唱空", "买入", "卖出", "点位", "目标价",
-    # 敏感时政 / 地缘 / 社会
-    "地缘", "制裁", "站队", "脱钩", "领导人", "群体事件", "维权", "罢工", "维稳", "对立",
-]
-
-
-def check_high_risk(text: str, *, keywords=None) -> list[tuple[int, str, str]]:
+# 规则来源：prompts/quality-and-risk.md C 节。词表从 data/high-risk-keywords.json 加载。
+def check_high_risk(text: str, *, keywords=None, notes: dict[str, str] | None = None
+                    ) -> list[tuple[int, str, str]]:
     """Soft-scan text for high-risk (politics/finance/sensitive) keywords.
 
     Warning-only — NEVER raises or blocks. Returns [(line_no, keyword, snippet)],
     deduplicated to the first occurrence of each keyword so warnings stay readable.
+    When the keyword has a `note`（易误报提示），note 会以可读方式追加到 snippet 末尾，
+    便于人工判断是否误报。返回值仍是三元组，向后兼容已有调用方。
     Callers should print these as warnings and ask a human to confirm the angle.
     """
-    kws = list(keywords) if keywords is not None else HIGH_RISK_KEYWORDS
+    if keywords is None:
+        keywords, loaded_notes = _load_high_risk_keywords()
+        if notes is None:
+            notes = loaded_notes
+    notes = notes or {}
     seen: set[str] = set()
     hits: list[tuple[int, str, str]] = []
     for i, line in enumerate(text.splitlines(), 1):
-        for kw in kws:
+        for kw in keywords:
             if kw and kw in line and kw not in seen:
                 seen.add(kw)
                 snippet = line.strip()
                 if len(snippet) > 120:
                     snippet = snippet[:120] + "..."
+                # 把 note 拼进 snippet（如 "大盘 <易误报: 大盘鸡>"），不改变三元组结构
+                note = notes.get(kw)
+                if note:
+                    snippet = f"{snippet}  <易误报: {note}>"
                 hits.append((i, kw, snippet))
     return hits
 
