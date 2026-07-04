@@ -71,10 +71,10 @@ Validated by `validate_publish_ready` in `publish_pipe.py`; any failure must blo
 
 ## Two accounts, distinct voices
 
-- `xiaocong` / 熵增时刻 — industry structure, tech logic, information density.
-- `yeluzi` / 思想的野路子丶 — capital, conflict, emotional momentum.
+- `xiaocong` / 熵增时刻 — tech, industry, AI, company and sector dynamics. High information density, restrained, industry-chain perspective, data-driven, low-emotion, like a friend who understands the industry explaining a complex change. Preferred structure: counterintuitive opening → event facts → industry-chain breakdown → company/tech-route comparison → China variable → impact on ordinary people → restrained conclusion.
+- `yeluzi` / 思想的野路子丶 — livelihood, consumption, workplace, platform rules, everyday life. More slice-of-life and scenario-driven, but not sensationalist, not partisan, not stoking division; grounded in the lived experience of ordinary people. Preferred structure: a change ordinary people can feel → event facts → who is affected → rules or platform logic → China's regulatory catch-up or constructive variable → how ordinary people respond → restrained conclusion.
 
-They **share one image set**, generated in `xiaocong`'s tone (dramatic/neutral, calm-explanatory). `yeluzi` does not get its own images.
+Each account generates **its own** images based on article content (baoyu-comic style, dramatic/neutral, 1024x576).
 
 ## Conventions
 

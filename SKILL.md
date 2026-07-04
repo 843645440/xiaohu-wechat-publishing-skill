@@ -2,7 +2,7 @@
 name: xiaohu-wechat-publishing
 description: |
   Use when working with WeChat Official Account: topic planning, writing, formatting, cover/body visuals, and draft-box publishing. Triggers: 写公众号, 微信排版, 公众号文章, 推草稿箱, 发公众号, 熵增时刻, 思想的野路子丶, or packaging an article for WeChat.
-version: 4.8.0
+version: 4.9.0
 author: Hermes curator
 license: MIT
 metadata:
@@ -34,13 +34,13 @@ metadata:
 - 做封面或正文图前读 `references/baoyu-style-index.md`（三大 baoyu skill 风格索引 + 自动匹配规则）。
 - 需要 Swiss Minimal 封面参数时读 `references/swiss-cover-usage.md`。
 - 排查字体方框字读 `references/image-font-tofu-debug-2026-05.md`。
-- 查完整历史规则或旧流程时才读 `references/legacy-skill-full-2026-05.md`。
+- 查完整历史规则或旧流程时：历史参考文件已清理，以 SKILL.md 和 `prompts/quality-and-risk.md` 为准。
 - 查端到端实测命令时读 `references/e2e-pipeline-commands-2026-05.md`。
 - 正文图注入场景和参数用法读 `references/body-image-injection-2026-05.md`。
 - 正文图生成实操（baoyu 框架 + Agnes API 完整示例）读 `references/body-image-baoyu-agnes-workflow.md`。
 - 人物素材库（可复用肖像图）读 `references/portrait-assets-library.md`。
 - 发布参数配置（评论、作者、摘要）读 `references/publish-config-params-2026-05.md`。
-- 早/晚定时任务的定稿提示词读 `references/cron-prompts-2026-06.md`。
+- 早/晚定时任务的提示词直接在 `~/.hermes/cron/jobs.json` 里（v3.0），如需修改用 `execute_code` 或 cronjob 管理工具操作，不要在本 skill 目录里建参考副本。
 
 ## 运行方式
 
@@ -94,8 +94,8 @@ python3 scripts/run.py publish_pipe.py --input article.md --cover cover.png --ac
 - **标题风格要按场景选，不要默认悬念型。** 可在信息直给型、问题讨论型、观点判断型、影响切口型、反差式、场景代入型、解释型之间选择，但无论选哪种，标题第一眼都必须让读者看懂“在讲什么事 / 什么对象”。
 - **标题主体必须明确。** 至少保留 1 个具体主体词：公司、产品、平台、行业、场景、品类之一。不能只剩抽象钩子（如“谁在买单 / 谁在补差价 / 还是证据吗”）。主体不明确的标题直接重写。
 - 双账号默认差异：
-  - `xiaocong` / 熵增时刻：产业结构、科技逻辑、信息密度。
-  - `yeluzi` / 思想的野路子丶：资本牌桌、冲突感、情绪推进。
+  - `xiaocong` / 熵增时刻：科技、产业、AI、公司变化、行业变化。信息密度高、克制、有产业链视角、有数据和对比、少情绪多判断，像一个懂产业的朋友在解释复杂变化。优先结构：反常识开头 → 事件事实 → 产业链拆解 → 公司或技术路线对比 → 中国变量 → 普通人影响 → 克制结论。
+  - `yeluzi` / 思想的野路子丶：民生、消费、职场、平台规则、普通人生活。更生活化、更有场景感，但不煽情、不站队、不制造对立，要有普通人的切身感。优先结构：普通人能感受到的变化 → 事件事实 → 谁受影响 → 规则或平台逻辑 → 中国规则补位或建设性变量 → 普通人怎么应对 → 克制结论。
 - 2000-4000 字正文应至少使用 3 种非段落元素；表格、引用、列表、代码块等规则见 `prompts/markdown-elements.md`。
 - 写完整篇后自检：如果全是纯段落，没有表格 / 列表 / 引用 / 代码块，直接重写结构。
 
@@ -110,7 +110,13 @@ python3 scripts/run.py publish_pipe.py --input article.md --cover cover.png --ac
 如果用户再次反馈此问题，优先检查：
 1. cron 执行时是否真的调用了 Agnes API（看 agent.log 里的 curl 命令）
 2. 每次生成的提示词是否足够具体、差异化
-3. 是否需要在 `references/cron-prompts-2026-06.md` 里加更严格的提示词要求
+3. 是否需要在 cron prompt（`~/.hermes/cron/jobs.json`）里加更严格的提示词要求
+
+**⚠️ 配图容错原则（用户明确要求，2026-07-03）**：封面或正文图生成失败（API 超时、网络错误、返回空等）时，**不要中断发布流程**。
+- 封面失败：跳过封面生成，发布时不传 --cover 参数（微信后台会要求手动补封面）。
+- 正文图失败：移除 article.md 中对应的 <!-- img:xxx --> 标记，发布时不传 --images 参数。
+- 最终报告中标注"配图失败，已跳过"。
+- 原因：2026-07-03 晚间任务因 body_02.png 下载失败导致整个发布流程中断，用户明确要求配图失败就跳过。
 
 封面默认用 Swiss Minimal，适合现成稿和快速发布：
 
@@ -345,11 +351,38 @@ python3 scripts/run.py wechat_pipeline.py publish --dir ~/.hermes/workspaces/wec
 2. 图片缺失：检查 Markdown 图位、`--images`、`article.html`、`images/`。
 3. 标题错误：检查 Markdown 第一个 `#` 和 `--title`。
 4. 字体方框：读 `references/image-font-tofu-debug-2026-05.md`。
-5. 旧流程或历史细节：读 `references/legacy-skill-full-2026-05.md`。
+5. 旧流程或历史细节：已归档清理，以 SKILL.md 为准。
 
 ## 定时任务故障排查
 
-**Skill 加载失败 "skill(s) not found"**：如果 cron 任务启动时报告 `xiaohu-wechat-publishing` skill 未找到，但文件实际存在于 `~/.hermes/skills/wechat/xiaohu-wechat-publishing/`，原因是 skill 名称歧义——存在多个同名/近似副本（backup、archived-v1），导致 `skill_view(name='xiaohu-wechat-publishing')` 拒绝猜测。解决：直接用 `skill_view(name='wechat/xiaohu-wechat-publishing')` 或 bare name `skill_manage(action='patch', name='xiaohu-wechat-publishing')` 可以绕过歧义。如果仍然失败，跳过 skill 加载，直接读取 `prompts/quality-and-risk.md`、`prompts/writing-persona.md`、`prompts/markdown-elements.md` 等文件继续工作——这些文件就是 skill 的核心内容。
+**Skill 加载失败 "skill(s) not found" — 顶层目录问题（2026-07-02 确认）**：Cron 调度器只在 `~/.hermes/skills/<name>/SKILL.md` 顶层查找 skill，**不会递归搜索子目录**。如果 skill 只存在于 `~/.hermes/skills/wechat/xiaohu-wechat-publishing/`，cron 会报：
+
+> ⚠️ Skill(s) not found and skipped: xiaohu-wechat-publishing
+
+任务会"执行"但 agent 没拿到 skill 指令，只会看到原始 prompt，产出垃圾（如反问用户"文章内容是什么"而不是写作发布）。
+
+**修复**：确保顶层软链接存在：
+```bash
+ln -s ~/.hermes/skills/wechat/xiaohu-wechat-publishing ~/.hermes/skills/xiaohu-wechat-publishing
+```
+
+**检测**：如果 cron 输出显示 "Skill(s) not found" 警告，检查 `~/.hermes/cron/output/<job_id>/` 最新日志。早间（7:00, xiaocong）和晚间（17:00, yeluzi）任务都依赖此 skill 可加载。
+
+**Skill 名称歧义（name 字段冲突）**：存在多个 SKILL.md 文件都含 `name: xiaohu-wechat-publishing`（如 `archived/xiaohu-wechat-publishing-v1/`、`wechat/xiaohu-wechat-publishing.backup-*/`），cron 调度器发现多个同名 skill 时**直接跳过加载**，输出 `[SILENT]`，不报错。`skill_view()` 也会拒绝猜测。
+
+**修复**（2026-07-02 确认）：
+1. 删除或重命名旧副本的 `name:` 字段：
+   ```bash
+   sed -i 's/^name: xiaohu-wechat-publishing$/name: xiaohu-wechat-publishing-v1/' \
+     ~/.hermes/skills/archived/xiaohu-wechat-publishing-v1/SKILL.md
+   ```
+2. 或直接删除旧副本目录：`rm -rf ~/.hermes/skills/archived/xiaohu-wechat-publishing-v1/`
+3. 确认只剩一个文件含 `name: xiaohu-wechat-publishing`：
+   ```bash
+   grep -rl "^name: xiaohu-wechat-publishing$" ~/.hermes/skills/
+   ```
+
+**软链接不是万能修复**：即使创建了顶层软链接 `~/.hermes/skills/xiaohu-wechat-publishing → wechat/xiaohu-wechat-publishing/`，如果 archived/backup 目录里还有同名 `name:` 字段，cron 仍会因歧义跳过。**必须同时消除名称冲突。**
 
 **"status: ok" 不等于执行成功。** Cron 任务可能模型在跑、输出文件在写，但全程没有调用任何实际工具（写作脚本、发布脚本一个都没跑）。排查步骤：
 
@@ -361,8 +394,25 @@ python3 scripts/run.py wechat_pipeline.py publish --dir ~/.hermes/workspaces/wec
    - 是否出现 `Stream stale` / `Failed to rebuild shared OpenAI client` 错误
    - `Turn ended` 行的 `tool_turns` 数量：只有搜索没有发布 = 没跑发布流程
 4. **看输出文件内容**：`~/.hermes/cron/output/<job_id>/` 下的 `.md` 文件包含完整 prompt + 最终回复。如果回复里有"草稿箱推送成功"但前面步骤 1/2 检查都失败，说明 agent 产生了幻觉——模型只写了报告没有实际执行。
+5. **模型提前停止并编造原因（2026-07-03 确认）**：agent 完成部分工作（如 article.md + cover.png + 1张正文图）后停止，输出声称"工具调用被拒绝"，但日志显示 `finish_reason=stop`（模型主动停止，非被拒绝）。排查时**不要信任 agent 的自我解释**，必须对照 agent.log 验证：
+   - 如果日志显示 `Turn ended: reason=text_response(finish_reason=stop)` 且 `api_calls` 远小于 budget（如 18/60），说明模型提前决定停止
+   - 如果 agent 输出说"被拒绝"/"出错"但日志没有对应 ERROR/WARNING，说明是幻觉
+   - 此时需要手动补完任务：检查产物目录缺什么，手动下载缺失图片，手动跑 `publish_pipe.py`
 
 详细调查记录见 `references/cron-execution-debug-2026-06.md`。
+
+## Cron prompt ↔ Skill 同步
+
+Cron prompt（`~/.hermes/cron/jobs.json`）和本 skill 必须保持一致。升级 prompt 时按以下 4 点检查 skill 侧：
+
+1. **账号人设三处一致**：SKILL.md 双账号差异段 + AGENTS.md "Two accounts" 段 + prompt 定位描述。
+2. **AI 标识措辞**：prompt 中"AI 辅助"只在报告层，文章正文硬门禁（`publish_pipe.py` AI 披露扫描）不可突破。
+3. **无参考副本**：skill 目录不存 cron prompt 副本，`jobs.json` 是唯一真相源。
+4. **发布命令模式**：prompt 中用 `--input --job-dir`（cron 最简路径），路径参数全绝对。
+
+详细冲突记录和修复方式见 `references/cron-prompt-sync-2026-07.md`。
+
+优先级：`prompts/quality-and-risk.md` > skill `SKILL.md` > cron 提示词。
 
 ## 文档交付偏好（用户明确修正）
 
