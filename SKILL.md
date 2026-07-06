@@ -32,6 +32,7 @@ metadata:
 - 写正文前读 `prompts/writing-persona.md` 和 `prompts/markdown-elements.md`。
 - **去AI味完整禁用词表**读 `prompts/banned-words.md`（含标点禁令、高频踩雷词、推荐口语化词组）。
 - **去AI味结构性问题**读 `prompts/structures.md`（二元对比、否定列举、公式化结构等）。
+- **去AI味改写示例**读 `prompts/examples.md`（含网文、技术、营销、学术场景）。
 - AI / 科技 / 产业稿额外读 `references/ai-tech-writing-guide.md`。
 - 做封面或正文图前读 `references/baoyu-style-index.md`（三大 baoyu skill 风格索引 + 自动匹配规则）。
 - 需要 Swiss Minimal 封面参数时读 `references/swiss-cover-usage.md`。
@@ -476,6 +477,15 @@ Cron prompt（`~/.hermes/cron/jobs.json`）和本 skill 必须保持一致。升
 - **区分规则层级**：明确标出哪些是通用 skill 规则，哪些是定时任务/cron 追加的任务规则，避免把两者混成一层。
 - **少废话、少过程描述**：用户此类需求要的是“可直接转发的成品”，不是你边解释边补充。
 - 如果用户后续还问“文档路径在哪 / 能不能直接发”，说明上一次交付不完整；下次默认同时给出文档路径。
+
+## Git 工作流偏好（用户明确修正，2026-07-06）
+
+**Pull 时优先远端版本**：当 `git pull` 产生冲突时，默认保留远端版本（`git reset --hard origin/main`），不要保留本地改动。用户希望本地与远端保持一致，本地修改应该在 pull 之前先 commit 或 stash 后手动处理。
+
+**典型场景**：
+- 如果本地有未提交的改动，先 `git stash` 再 pull
+- 如果 stash pop 产生冲突，优先选择远端版本：`git checkout --theirs .` 或直接 `git reset --hard origin/main`
+- 不要自作主张保留本地版本，除非用户明确说"保留本地的"
 
 ## 对外审阅文档输出规则
 
