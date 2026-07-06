@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "note": "命中即 warning（不阻断发布）。调整词表只需改本文件，无需改代码或 prompts/quality-and-risk.md。来源：quality-and-risk.md C 节。",
+  "note": "命中即 warning（不阻断发布）。调整词表只需改本文件。用于避开政治、财经预测、敏感社会议题。",
   "keywords": [
     "降息",
     "加息",

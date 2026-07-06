@@ -9,138 +9,91 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class LowQualitySimilarityTests(unittest.TestCase):
-    def test_signature_detects_fixed_quality_template_headings(self):
+    def test_signature_keeps_only_title_and_summary(self):
         from publish_history import build_content_signature
 
         md = """# 正式标题
 
-## 事实底座
-这里是事实。
+这是一篇讲平台规则变化的文章。它重点说明小商家在退款、客服和订单处理里遇到的新问题。
 
-## 背景解释
-这里是背景。
-
-## 普通人影响
-这里是影响。
-
-## 中国变量
-这里是结论。
+## 一个具体变化
+正文。
 """
-
         sig = build_content_signature(md, title="正式标题")
 
-        self.assertEqual(sig["structure_archetype"], "fixed_quality_template")
-        self.assertGreaterEqual(sig["generic_heading_count"], 3)
+        self.assertEqual(sig["schema"], 2)
+        self.assertEqual(sig["title"], "正式标题")
+        self.assertIn("平台规则变化", sig["summary"])
+        self.assertNotIn("structure_archetype", sig)
+        self.assertNotIn("cover_meta", sig)
 
-    def test_same_account_recent_repeated_signature_warns(self):
+    def test_same_account_recent_summary_warns(self):
         from publish_history import build_content_signature, check_low_quality_similarity
 
-        md = """# 不是工具变了，是工作流变了
+        md = """# 平台退款规则变了，小商家最先感到压力
 
-开头先讲一个具体事实。
-
-## 为什么这次变化值得看
-第一段。
-
-## 普通人最关心什么
-第二段。
-
-## 接下来怎么判断
-第三段。
-
-- 清单一
-- 清单二
+这篇文章讲平台退款规则变化，小商家在订单处理、售后客服和成本分摊里遇到的新压力。
 """
-        sig = build_content_signature(md, title="不是工具变了，是工作流变了")
-        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
-        history = [{
-            "ts": ts,
-            "account": "xiaocong",
-            "title": "不是模型变了，是应用层变了",
-            "extra": {"content_signature": sig},
-        }]
-
-        warnings = check_low_quality_similarity(sig, accounts=["xiaocong"], history=history)
-
-        self.assertTrue(warnings)
-        self.assertIn("同账号", warnings[0]["reason"])
-
-    def test_other_account_history_is_ignored(self):
-        from publish_history import build_content_signature, check_low_quality_similarity
-
-        md = """# 平台规则变了，小商家要看懂
-
-一个订单变化开始。
-
-## 为什么这次变化值得看
-第一段。
-
-## 普通人最关心什么
-第二段。
-
-## 接下来怎么判断
-第三段。
-"""
-        sig = build_content_signature(md, title="平台规则变了，小商家要看懂")
+        sig = build_content_signature(md, title="平台退款规则变了，小商家最先感到压力")
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
         history = [{
             "ts": ts,
             "account": "yeluzi",
-            "title": "平台规则变了，小商家要看懂",
-            "extra": {"content_signature": sig},
+            "title": "平台退款规则变了，小店老板先感到压力",
+            "summary": "这篇文章讲平台退款规则变化，小商家在订单处理、售后客服和成本分摊里遇到的新压力。",
         }]
 
-        warnings = check_low_quality_similarity(sig, accounts=["xiaocong"], history=history)
+        warnings = check_low_quality_similarity(sig, accounts=["yeluzi"], history=history)
 
-        self.assertEqual(warnings, [])
+        self.assertTrue(warnings)
+        self.assertRegex(warnings[0]["detail"], "标题|文章大意")
 
-    def test_visual_meta_repetition_warns_without_image_recognition(self):
+    def test_other_account_history_is_ignored(self):
         from publish_history import build_content_signature, check_low_quality_similarity
 
-        md = """# 一个新标题
-
-## 第一节
-正文。
-
-## 第二节
-正文。
-"""
-        visual_meta = {
-            "cover": {
-                "archetype": "结构地图型",
-                "layout": "left-title-right-map",
-                "subject": "AI 工具工作流",
-                "prompt_key": "same-cover-prompt",
-            },
-            "body_images": [
-                {
-                    "file": "body-1.png",
-                    "type": "structure-map",
-                    "style": "infographic-blueprint",
-                    "prompt_key": "same-body-prompt",
-                }
-            ],
-        }
-        sig = build_content_signature(md, title="一个新标题", visual_meta=visual_meta)
-        old = build_content_signature(md, title="另一个标题", visual_meta=visual_meta)
-        old["structure_archetype"] = "different"
-        old["title_pattern"] = "different"
-        old["opening_pattern"] = "different"
-        old["heading_signature"] = ["different"]
-        old["element_sequence_key"] = "different"
+        sig = build_content_signature(
+            "AI 工具进入工单系统，客服流程开始被重新拆分。",
+            title="AI 工具进入工单系统",
+        )
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
         history = [{
             "ts": ts,
             "account": "xiaocong",
-            "title": "另一个标题",
-            "extra": {"content_signature": old},
+            "title": "AI 工具进入工单系统",
+            "summary": "AI 工具进入工单系统，客服流程开始被重新拆分。",
         }]
 
-        warnings = check_low_quality_similarity(sig, accounts=["xiaocong"], history=history)
+        warnings = check_low_quality_similarity(sig, accounts=["yeluzi"], history=history)
 
-        self.assertTrue(warnings)
-        self.assertIn("封面", warnings[0]["detail"])
-        self.assertIn("正文图", warnings[0]["detail"])
+        self.assertEqual(warnings, [])
+
+    def test_record_publish_keeps_minimal_history(self):
+        from publish_history import record_publish
+        import publish_history
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as td:
+            original = publish_history.workspace_root
+            publish_history.workspace_root = lambda: td
+            try:
+                path = record_publish(
+                    account="xiaocong",
+                    title="标题",
+                    summary="文章大意",
+                    media_id="media123",
+                    job_dir="/tmp/job",
+                    article_dir="/tmp/article",
+                    cover="/tmp/cover.png",
+                    app_id="wx-secret",
+                )
+                line = path.read_text(encoding="utf-8").strip()
+            finally:
+                publish_history.workspace_root = original
+
+        self.assertIn('"title": "标题"', line)
+        self.assertIn('"summary": "文章大意"', line)
+        self.assertNotIn("job_dir", line)
+        self.assertNotIn("cover", line)
 
 
 if __name__ == "__main__":

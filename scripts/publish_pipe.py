@@ -465,32 +465,6 @@ def _resolve_cover(cli_value, input_path, dir_path):
     sys.exit(1)
 
 
-def _load_visual_meta(job_dir, input_path):
-    """读取生图提示词元数据；只用于低创作度相似性检查，不影响发布。"""
-    candidates = []
-    if job_dir:
-        candidates.append(Path(job_dir).expanduser().resolve() / "visual-meta.json")
-    if input_path:
-        candidates.append(Path(input_path).expanduser().resolve().parent / "visual-meta.json")
-
-    seen = set()
-    for path in candidates:
-        if path in seen:
-            continue
-        seen.add(path)
-        if not path.exists():
-            continue
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            if isinstance(data, dict):
-                print(f"  ✓ 读取视觉元数据: {path}")
-                return data
-            print(f"  ⚠ 视觉元数据不是 JSON 对象，已忽略: {path}", file=sys.stderr)
-        except Exception as exc:
-            print(f"  ⚠ 视觉元数据解析失败，已忽略: {path} ({exc})", file=sys.stderr)
-    return {}
-
-
 def _run_pipe():
     parser = argparse.ArgumentParser(description="一键发布管线：排版 → 注入 → 发布")
     group = parser.add_mutually_exclusive_group(required=True)
@@ -505,7 +479,7 @@ def _run_pipe():
     parser.add_argument("--job-dir", help="本次任务目录；排版输出会写入该目录下的 format/")
     parser.add_argument("--output-dir", help="排版输出根目录；未设置时读取 config.output_dir")
     parser.add_argument("--fail-on-low-quality-warning", action="store_true",
-                        help="低创作度相似性命中时退出失败（cron 自动任务建议开启）")
+                        help="近期标题/文章大意相似时退出失败（cron 自动任务建议开启）")
     parser.add_argument("--dry-run", action="store_true", help="只做本地排版与校验，不触网、不上传、不推送")
     args = parser.parse_args()
 
@@ -523,7 +497,6 @@ def _run_pipe():
         # 标题/封面文案是标题党与敏感词高发区，连同标题一起扫。
         scan_text = ((args.title or "") + "\n" + md_text)
         print_high_risk_warnings(check_high_risk(scan_text))
-    visual_meta = _load_visual_meta(args.job_dir, args.input) if args.input else {}
 
     # ── 1. 账号设置（支持多账号列表）──
     accounts_to_publish = []  # list of (name, app_id, app_secret, author)
@@ -639,16 +612,14 @@ def _run_pipe():
             md_text,
             html_text=html,
             title=title,
-            cover_path=cover_path,
-            visual_meta=visual_meta,
         )
         account_names = [name for name, *_rest in accounts_to_publish]
         low_quality_warnings = check_low_quality_similarity(content_signature, accounts=account_names)
         print_low_quality_warnings(low_quality_warnings)
         if low_quality_warnings and args.fail_on_low_quality_warning:
             print(
-                "\n✗ 低创作度相似性扫描命中，已按 --fail-on-low-quality-warning 停止。\n"
-                "  → 请换结构原型、改标题句式或重做封面/正文图后重试。",
+                "\n✗ 近期标题/文章大意相似，已按 --fail-on-low-quality-warning 停止。\n"
+                "  → 请换题，或把文章改成明显不同的新角度后重试。",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -732,6 +703,7 @@ def _run_pipe():
                     article_dir=str(article_dir),
                     cover=str(cover_path),
                     app_id=app_id,
+                    summary=(content_signature or {}).get("summary", ""),
                     extra={"content_signature": content_signature} if content_signature else None,
                 )
                 print(f"  ✓ 已归档到 {hist}")
