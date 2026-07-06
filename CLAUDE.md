@@ -44,7 +44,7 @@ The pipeline is a chain of single-responsibility scripts, with `publish_pipe.py`
 - **`workspace.py`** — single source of truth for paths. Resolves the workspace root (`WECHAT_WORKSPACE_DIR` env → `config.json` → default `~/.hermes/workspaces/wechat`), job/account dirs, token cache, theme selection file, manifests. Use these helpers rather than hand-building paths.
 - **`format.py`** — Markdown → WeChat-compatible HTML. WeChat strips `<style>`, CSS classes, and JS, so **every style must be inlined** as `style="..."` per element. Themes come from `themes/*.json`. The publishable artifact is `article.html`, **not** `preview.html`.
 - **`image_injector.py`** — the *only* source of body-image injection. Markdown `<!-- img:filename -->` markers are resolved here; an unresolved marker is a hard failure.
-- **`publish_pipe.py`** — main entry. Loads per-account credentials, formats, injects, runs `validate_publish_ready`, then publishes to the draft box. `--dry-run` runs everything except the final push.
+- **`publish_pipe.py`** — main entry. Loads per-account credentials, formats, injects, runs `validate_publish_ready`, then publishes to the draft box. `--dry-run` runs everything except the final push. Cron jobs should pass `--fail-on-low-quality-warning` so same-account recent structure/visual similarity stops unattended publishing.
 - **`publish.py`** — lower-level WeChat draft-box client (token, media upload, draft create). `publish_pipe.py` is the preferred front door.
 - **`wechat_pipeline.py`** — managed `build` / `validate` / `publish` workflow over the structured `jobs/<job>/<account>/` workspace layout (used by cron / batch runs).
 - **Cover/body renderers** — `render_cover_swiss.py` (default fast cover), `render_editorial_cover.py`, `render_editorial_body_modular.py`, etc. Render HTML templates (`templates/*.html`) to PNG via playwright.
@@ -70,5 +70,5 @@ These are validated by `validate_publish_ready` in `publish_pipe.py`; any failur
 
 - Scripts and the skill are written in Chinese; comments and `print` output are Chinese. Match that when editing existing files.
 - Keep task scope tight: a formatting request should not enter the publish path; a cover request should not touch article copy (see `SKILL.md` "任务路由").
-- Two accounts have distinct editorial voices: `xiaocong` (熵增时刻 — industry/structure/density) and `yeluzi` (思想的野路子丶 — capital/conflict/emotion). They share one image set, generated in `xiaocong`'s tone.
+- Two accounts have distinct editorial voices: `xiaocong` (熵增时刻 — industry/structure/density) and `yeluzi` (思想的野路子丶 — livelihood/consumption/workplace/platform rules). Do not use fixed preferred structures; pick a structure archetype per article and avoid repeating the same structure/title/cover/body-image pattern for the same account within 7 days. Each account generates its own images from article content.
 - `references/*.md` are dated workflow/debug notes — load only the one relevant to the current task (the SKILL.md "先读什么" section maps task → file). `references/legacy-skill-full-2026-05.md` is the full historical ruleset.

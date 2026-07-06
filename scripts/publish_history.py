@@ -6,6 +6,8 @@ Functions:
     list_history(limit=20)   → most recent N entries
     check_ai_disclosure(text, *, raise_on_hit=True) → returns list of (line_no, snippet);
         by default raises SystemExit(2) when any pattern matches.
+    build_content_signature(...) → structure/title/cover signature for anti-low-quality checks.
+    check_low_quality_similarity(...) → warning-only same-account recent similarity scan.
 
 User-level invariant (from user profile memory):
   公众号文章严禁出现"本文由AI协助撰写"之类的AI身份披露/利益相关声明.
@@ -14,9 +16,12 @@ User-level invariant (from user profile memory):
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 import sys
 import time
+from datetime import datetime, timedelta, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from workspace import ensure_workspace, workspace_root
@@ -154,6 +159,406 @@ def print_high_risk_warnings(hits: list[tuple[int, str, str]]) -> None:
     for ln, kw, sn in hits:
         print(f"  行 {ln} [{kw}]: {sn}", file=sys.stderr)
     print("  → 规避方式见 prompts/quality-and-risk.md C 节。\n", file=sys.stderr)
+
+
+GENERIC_HEADING_PATTERNS = [
+    "事实底座", "背景解释", "原创分析", "普通人影响", "中国变量", "建设性结论",
+    "克制结论", "结语", "总结", "这件事意味着什么", "影响是什么", "为什么重要",
+]
+
+TITLE_PATTERN_RULES = [
+    ("not_x_but_y", re.compile(r"不是.+(而是|是).+")),
+    ("x_changed_y_feels", re.compile(r".+(变了|变化了).+(先|会|正在).+")),
+    ("this_change_means", re.compile(r"(这次|这个|一项|一条).*(变化|新规|动作).*(说明|意味着|背后)")),
+    ("question", re.compile(r"[？?]$|为什么|怎么|如何")),
+    ("number_anchor", re.compile(r"\d|万|亿|%|％|倍")),
+    ("contrast", re.compile(r"表面|本质|过去|现在|以前|如今|背后|真正")),
+]
+
+
+def _compact_sequence(items: list[str], *, limit: int = 18) -> list[str]:
+    out: list[str] = []
+    for item in items:
+        if item and (not out or out[-1] != item):
+            out.append(item)
+    return out[:limit]
+
+
+def _strip_frontmatter(text: str) -> str:
+    if text.startswith("---\n"):
+        end = text.find("\n---", 4)
+        if end != -1:
+            return text[end + 4:].lstrip()
+    return text
+
+
+def _plain_text(value: str) -> str:
+    value = re.sub(r"<[^>]+>", "", value or "")
+    value = re.sub(r"\s+", "", value)
+    return value.strip()
+
+
+def _title_pattern(title: str) -> str:
+    compact = _plain_text(title)
+    for name, pattern in TITLE_PATTERN_RULES:
+        if pattern.search(compact):
+            return name
+    if len(compact) <= 12:
+        return "short_direct"
+    return "direct_statement"
+
+
+def _extract_md_headings(text: str) -> list[str]:
+    headings = []
+    for line in text.splitlines():
+        match = re.match(r"^\s{0,3}(#{2,4})\s+(.+?)\s*$", line)
+        if match:
+            headings.append(match.group(2).strip(" #"))
+    return headings
+
+
+def _extract_html_headings(html: str) -> list[str]:
+    headings = []
+    for tag, value in re.findall(r"<(h[2-4])[^>]*>(.*?)</\1>", html or "", flags=re.I | re.S):
+        text = _plain_text(value)
+        if text:
+            headings.append(text)
+    return headings
+
+
+def _heading_token(heading: str) -> str:
+    compact = _plain_text(heading)
+    for pattern in GENERIC_HEADING_PATTERNS:
+        if pattern in compact:
+            return f"generic:{pattern}"
+    if re.search(r"[？?]$|为什么|怎么|如何", compact):
+        return "question"
+    if re.search(r"过去|现在|以前|如今|表面|本质|对比|不同", compact):
+        return "contrast"
+    if re.search(r"\d|万|亿|%|％|倍", compact):
+        return "number"
+    return re.sub(r"[\d０-９一二三四五六七八九十百千万亿%％]+", "#", compact)[:18]
+
+
+def _element_sequence(markdown_text: str) -> list[str]:
+    items: list[str] = []
+    in_code = False
+    for raw in markdown_text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("```"):
+            items.append("CODE")
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        if re.match(r"^#{2,4}\s+", line):
+            items.append("H")
+        elif line.startswith(">"):
+            items.append("QUOTE")
+        elif ("<!--" in line and "img:" in line) or re.search(r"!\[[^\]]*\]\(", line):
+            items.append("IMG")
+        elif "|" in line and line.count("|") >= 2:
+            items.append("TABLE")
+        elif re.match(r"^([-*+]|\d+[.、])\s+", line):
+            items.append("LIST")
+        elif re.match(r"^-{3,}$", line):
+            items.append("HR")
+        else:
+            items.append("P")
+    return _compact_sequence(items)
+
+
+def _opening_pattern(markdown_text: str) -> str:
+    text = _strip_frontmatter(markdown_text)
+    for block in re.split(r"\n\s*\n", text):
+        block = block.strip()
+        if not block or block.startswith("#") or block.startswith("<!--"):
+            continue
+        compact = _plain_text(block)
+        if not compact:
+            continue
+        if compact.startswith(("近日", "最近", "今天", "刚刚")):
+            return "news_lead"
+        if re.search(r"^\d|^[一二三四五六七八九十].*个", compact):
+            return "number_lead"
+        if re.search(r"[？?]$", compact[:80]) or compact.startswith(("为什么", "怎么", "如何")):
+            return "question_lead"
+        if re.search(r"办公室|通勤|小店|账单|订单|家庭|打工人|消费者|程序员|创作者", compact[:120]):
+            return "scene_lead"
+        if compact.startswith(("不是", "很多人以为", "表面看")):
+            return "contrast_lead"
+        return "direct_lead"
+    return "unknown"
+
+
+def _structure_archetype(markdown_text: str, title: str, heading_tokens: list[str], generic_count: int) -> str:
+    joined = "\n".join([title, markdown_text, " ".join(heading_tokens)])
+    if generic_count >= 3:
+        return "fixed_quality_template"
+    if heading_tokens.count("question") >= 3 or re.search(r"问答|Q&A|问题", joined, flags=re.I):
+        return "qa"
+    if re.search(r"时间线|节点|第[一二三四五六七八九十]阶段|20\d{2}", joined):
+        return "timeline"
+    if re.search(r"过去|现在|以前|如今|表面|本质|对比|不同", joined):
+        return "contrast"
+    if re.search(r"清单|误区|建议|步骤|做法", joined):
+        return "list"
+    if re.search(r"办公室|通勤|小店|账单|订单|家庭|场景", joined):
+        return "scene"
+    if re.search(r"\d|万|亿|%|％|倍", title):
+        return "data_explainer"
+    return "analysis"
+
+
+def _cover_signature(cover_path: str | Path | None) -> dict:
+    if not cover_path:
+        return {}
+    path = Path(cover_path)
+    sig = {
+        "file_name": path.name,
+        "suffix": path.suffix.lower(),
+        "exists": path.exists(),
+    }
+    if path.exists():
+        sig["bytes"] = path.stat().st_size
+        try:
+            from PIL import Image
+            with Image.open(path) as img:
+                sig["size"] = f"{img.width}x{img.height}"
+        except Exception:
+            sig["size"] = "unknown"
+    return sig
+
+
+def _parse_visual_meta_comment(raw: str) -> dict:
+    out: dict[str, str] = {}
+    for part in re.split(r"[;；]\s*", raw.strip()):
+        if not part:
+            continue
+        if "=" in part:
+            key, value = part.split("=", 1)
+        elif "：" in part:
+            key, value = part.split("：", 1)
+        elif ":" in part:
+            key, value = part.split(":", 1)
+        else:
+            continue
+        out[key.strip().lower().replace("-", "_")] = value.strip().strip('"\'')
+    return out
+
+
+def _visual_meta_from_comments(markdown_text: str) -> dict:
+    cover: dict = {}
+    body_images: list[dict] = []
+    for kind, raw in re.findall(r"<!--\s*(cover-meta|image-meta)\s*:\s*(.*?)\s*-->", markdown_text or "", flags=re.I | re.S):
+        item = _parse_visual_meta_comment(raw)
+        if not item:
+            continue
+        if kind.lower() == "cover-meta":
+            cover.update(item)
+        else:
+            body_images.append(item)
+    return {"cover": cover, "body_images": body_images}
+
+
+def _normalise_visual_meta(visual_meta: dict | None, markdown_text: str) -> dict:
+    meta = visual_meta if isinstance(visual_meta, dict) else {}
+    if not meta:
+        meta = _visual_meta_from_comments(markdown_text)
+    cover = meta.get("cover") if isinstance(meta.get("cover"), dict) else {}
+    raw_images = (
+        meta.get("body_images")
+        or meta.get("images")
+        or meta.get("body")
+        or []
+    )
+    body_images = [item for item in raw_images if isinstance(item, dict)]
+    return {"cover": cover, "body_images": body_images}
+
+
+def _prompt_fingerprint(item: dict) -> str:
+    source = (
+        item.get("prompt_key")
+        or item.get("prompt")
+        or "|".join(str(item.get(k, "")) for k in ("archetype", "layout", "subject", "type", "style"))
+    )
+    source = re.sub(r"\s+", " ", str(source)).strip().lower()
+    if not source:
+        return ""
+    return hashlib.sha1(source.encode("utf-8")).hexdigest()[:12]
+
+
+def build_content_signature(
+    markdown_text: str,
+    *,
+    html_text: str = "",
+    title: str = "",
+    cover_path: str | Path | None = None,
+    visual_meta: dict | None = None,
+) -> dict:
+    """生成低创作度相似性检查用的轻量结构签名。
+
+    只做启发式归纳，不读外部服务，不阻断发布。签名会写入 publish-history.jsonl，
+    供同账号后续文章做近期结构/标题/视觉去重。
+    """
+    text = _strip_frontmatter(markdown_text or "")
+    headings = _extract_md_headings(text) or _extract_html_headings(html_text)
+    heading_tokens = [_heading_token(h) for h in headings]
+    generic_count = sum(1 for token in heading_tokens if token.startswith("generic:"))
+    sequence = _element_sequence(text)
+    visual = _normalise_visual_meta(visual_meta, text)
+    cover_meta = dict(visual["cover"])
+    body_image_meta = [dict(item) for item in visual["body_images"]]
+    if cover_meta:
+        cover_meta["prompt_fingerprint"] = _prompt_fingerprint(cover_meta)
+    for item in body_image_meta:
+        item["prompt_fingerprint"] = _prompt_fingerprint(item)
+    return {
+        "schema": 1,
+        "title_pattern": _title_pattern(title),
+        "opening_pattern": _opening_pattern(text),
+        "structure_archetype": _structure_archetype(text, title, heading_tokens, generic_count),
+        "heading_signature": _compact_sequence(heading_tokens, limit=12),
+        "generic_heading_count": generic_count,
+        "element_sequence": sequence,
+        "element_sequence_key": "-".join(sequence[:12]),
+        "cover_signature": _cover_signature(cover_path),
+        "cover_meta": cover_meta,
+        "body_image_meta": body_image_meta,
+        "body_image_types": [str(item.get("type") or item.get("archetype") or "").strip() for item in body_image_meta if item.get("type") or item.get("archetype")],
+    }
+
+
+def _parse_ts(value: str) -> datetime | None:
+    if not value:
+        return None
+    for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S"):
+        try:
+            dt = datetime.strptime(value, fmt)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+        except ValueError:
+            continue
+    return None
+
+
+def _history_signature(entry: dict) -> dict | None:
+    extra = entry.get("extra") if isinstance(entry.get("extra"), dict) else {}
+    sig = extra.get("content_signature") or extra.get("anti_low_quality")
+    return sig if isinstance(sig, dict) else None
+
+
+def _similarity(a: list[str], b: list[str]) -> float:
+    if not a or not b:
+        return 0.0
+    return SequenceMatcher(None, "|".join(a), "|".join(b)).ratio()
+
+
+def check_low_quality_similarity(
+    signature: dict,
+    *,
+    accounts: list[str],
+    history: list[dict] | None = None,
+    days: int = 7,
+) -> list[dict]:
+    """同账号近期低创作度相似性软扫描。
+
+    返回 warning 字典列表，不抛异常、不阻断发布。history 可注入，便于单测。
+    """
+    warnings: list[dict] = []
+    if not signature:
+        return warnings
+
+    if signature.get("generic_heading_count", 0) >= 3:
+        warnings.append({
+            "account": ",".join(accounts) or "unknown",
+            "reason": "通用模板小标题过多",
+            "detail": "检测到多个“事实底座/背景解释/普通人影响”等模板标题，请改为内容专属小标题。",
+            "previous_title": "",
+            "previous_ts": "",
+        })
+
+    history = list_history(100) if history is None else history
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=days)
+    account_set = set(accounts or [])
+
+    for entry in reversed(history):
+        account = entry.get("account", "")
+        if account_set and account not in account_set:
+            continue
+        ts = _parse_ts(entry.get("ts", ""))
+        if ts and ts.astimezone(timezone.utc) < cutoff:
+            continue
+        old = _history_signature(entry)
+        if not old:
+            continue
+
+        reasons: list[str] = []
+        if signature.get("structure_archetype") == old.get("structure_archetype"):
+            reasons.append(f"结构原型重复：{signature.get('structure_archetype')}")
+        if signature.get("title_pattern") == old.get("title_pattern") and signature.get("title_pattern") != "direct_statement":
+            reasons.append(f"标题句式重复：{signature.get('title_pattern')}")
+        if signature.get("opening_pattern") == old.get("opening_pattern") and signature.get("opening_pattern") not in ("unknown", "direct_lead"):
+            reasons.append(f"开头方式重复：{signature.get('opening_pattern')}")
+        heading_sim = _similarity(signature.get("heading_signature", []), old.get("heading_signature", []))
+        if heading_sim >= 0.82 and len(signature.get("heading_signature", [])) >= 2:
+            reasons.append(f"小标题骨架相似度 {heading_sim:.2f}")
+        if (
+            signature.get("element_sequence_key")
+            and signature.get("element_sequence_key") == old.get("element_sequence_key")
+            and len(signature.get("element_sequence", [])) >= 5
+        ):
+            reasons.append("段落/表格/列表/图片顺序一致")
+
+        cover_new = signature.get("cover_meta", {})
+        cover_old = old.get("cover_meta", {})
+        if cover_new and cover_old:
+            same_cover_bits = []
+            for key, label in (("archetype", "封面原型"), ("layout", "封面构图"), ("subject", "视觉主体")):
+                if cover_new.get(key) and cover_new.get(key) == cover_old.get(key):
+                    same_cover_bits.append(f"{label}重复：{cover_new.get(key)}")
+            if cover_new.get("prompt_fingerprint") and cover_new.get("prompt_fingerprint") == cover_old.get("prompt_fingerprint"):
+                same_cover_bits.append("封面生图提示词指纹重复")
+            if len(same_cover_bits) >= 2:
+                reasons.extend(same_cover_bits)
+
+        image_types_new = signature.get("body_image_types", [])
+        image_types_old = old.get("body_image_types", [])
+        if image_types_new and image_types_new == image_types_old:
+            reasons.append(f"正文图类型顺序重复：{'/'.join(image_types_new)}")
+
+        prompt_keys_new = [item.get("prompt_fingerprint") for item in signature.get("body_image_meta", []) if item.get("prompt_fingerprint")]
+        prompt_keys_old = [item.get("prompt_fingerprint") for item in old.get("body_image_meta", []) if item.get("prompt_fingerprint")]
+        if prompt_keys_new and prompt_keys_new == prompt_keys_old:
+            reasons.append("正文图生图提示词指纹重复")
+
+        if len(reasons) >= 2:
+            warnings.append({
+                "account": account,
+                "reason": "同账号近期内容结构/视觉相似",
+                "detail": "；".join(reasons),
+                "previous_title": entry.get("title", ""),
+                "previous_ts": entry.get("ts", ""),
+            })
+            break
+
+    return warnings
+
+
+def print_low_quality_warnings(warnings: list[dict]) -> None:
+    if not warnings:
+        return
+    print("\n⚠ 低创作度相似性软扫描命中（不阻断，请优先重写结构/标题或重做封面）：", file=sys.stderr)
+    for item in warnings:
+        prev = item.get("previous_title") or "无历史标题"
+        ts = item.get("previous_ts") or "当前稿件"
+        print(f"  [{item.get('account', '')}] {item.get('reason', '')}: {item.get('detail', '')}", file=sys.stderr)
+        print(f"    对比对象: {ts} {prev}", file=sys.stderr)
+    print("  → 处理方式：换结构原型、改标题句式、重做封面原型或减少同风格正文图。\n", file=sys.stderr)
 
 
 

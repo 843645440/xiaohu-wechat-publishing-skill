@@ -47,7 +47,7 @@ python3 -m unittest tests.test_publish_validation.PublishValidationTests.test_re
 - `workspace.py` — single source of truth for paths. Resolves workspace root (`WECHAT_WORKSPACE_DIR` env → `config.json` → default `~/.hermes/workspaces/wechat`), job/account dirs, token cache, theme selection, manifests. Use these helpers; don't hand-build paths.
 - `format.py` — Markdown → WeChat-compatible HTML using `themes/*.json`.
 - `image_injector.py` — the **only** source of body-image injection. Markdown `<!-- img:filename -->` markers resolve here; an unresolved marker is a hard failure. (`inject_body_images.py` is a CLI compatibility shim that just calls `image_injector.inject()` — don't add new logic there.)
-- `publish_pipe.py` — main orchestrator: format → inject → `validate_publish_ready` → publish to draft box. `--dry-run` runs everything except the final push. This is the preferred front door for publishing.
+- `publish_pipe.py` — main orchestrator: format → inject → `validate_publish_ready` → publish to draft box. `--dry-run` runs everything except the final push. Cron jobs should also pass `--fail-on-low-quality-warning` so same-account recent structure/visual similarity stops unattended publishing. This is the preferred front door for publishing.
 - `publish.py` — lower-level WeChat draft-box client (token, media upload, draft create).
 - `wechat_pipeline.py` — managed `build` / `validate` / `publish` workflow over the structured `jobs/<job>/<account>/` layout (used by cron / batch runs).
 - Cover/body renderers — `render_cover_swiss.py` (default fast cover), `render_editorial_cover.py`, `render_editorial_body_modular.py`, etc. Render `templates/*.html` to PNG via playwright.
@@ -71,10 +71,10 @@ Validated by `validate_publish_ready` in `publish_pipe.py`; any failure must blo
 
 ## Two accounts, distinct voices
 
-- `xiaocong` / 熵增时刻 — tech, industry, AI, company and sector dynamics. High information density, restrained, industry-chain perspective, data-driven, low-emotion, like a friend who understands the industry explaining a complex change. Preferred structure: counterintuitive opening → event facts → industry-chain breakdown → company/tech-route comparison → China variable → impact on ordinary people → restrained conclusion.
-- `yeluzi` / 思想的野路子丶 — livelihood, consumption, workplace, platform rules, everyday life. More slice-of-life and scenario-driven, but not sensationalist, not partisan, not stoking division; grounded in the lived experience of ordinary people. Preferred structure: a change ordinary people can feel → event facts → who is affected → rules or platform logic → China's regulatory catch-up or constructive variable → how ordinary people respond → restrained conclusion.
+- `xiaocong` / 熵增时刻 — tech, industry, AI, company and sector dynamics. High information density, restrained, industry-chain perspective, data-driven, low-emotion, like a friend who understands the industry explaining a complex change. Common but non-fixed organization modes: industry-chain breakdown, technology-route comparison, data-impact explainer, timeline review, counterintuitive explanation, system-change analysis.
+- `yeluzi` / 思想的野路子丶 — livelihood, consumption, workplace, platform rules, everyday life. More slice-of-life and scenario-driven, but not sensationalist, not partisan, not stoking division; grounded in the lived experience of ordinary people. Common but non-fixed organization modes: concrete-scene opening, rules Q&A, platform/user comparison, ordinary-person action list, bill/order/small-shop case, before/after comparison.
 
-Each account generates **its own** images based on article content (baoyu-comic style, dramatic/neutral, 1024x576).
+Each account generates **its own** images based on article content. Do not default every article to baoyu-comic + dramatic/neutral + 1024x576; choose cover archetype and body-image type from the article, and avoid repeating the same visual pattern for the same account within 7 days.
 
 ## Conventions
 
