@@ -2,17 +2,20 @@
 name: xiaohu-wechat-publishing
 description: |
   Use when working with WeChat Official Account: topic planning, writing, formatting, cover/body visuals, and draft-box publishing. Triggers: 写公众号, 微信排版, 公众号文章, 推草稿箱, 发公众号, 熵增时刻, 思想的野路子丶, or packaging an article for WeChat.
-version: 4.9.0
+version: 5.0.0
 author: Hermes curator
 license: MIT
 metadata:
   hermes:
     tags: [wechat, mp, article, pipeline, formatting, cover, publish, xiaohu]
+    related_skills: []
 ---
 
 # 小虎公众号生产与发布总管线
 
-这是唯一主 skill。处理公众号任务时，只加载 `xiaohu-wechat-publishing`；写作、排版、封面、正文图、发布都在这里调度。
+这是唯一主 skill。处理公众号任务时，只加载 `xiaohu-wechat-publishing`；写作、去 AI 味、排版、封面、正文图、发布都在这里调度。
+
+**本 skill 已合并原先依赖的 4 个外部 skill 的公众号可用流程**：`baoyu-article-illustrator`、`baoyu-comic`、`baoyu-infographic`、`humanizer`。公众号任务中不要再额外加载这些 skill；需要的选择规则、提示词结构、执行步骤和避坑都在本文内。
 
 ## 默认原则
 
@@ -33,8 +36,9 @@ metadata:
 - **去AI味完整禁用词表**读 `prompts/banned-words.md`（含标点禁令、高频踩雷词、推荐口语化词组）。
 - **去AI味结构性问题**读 `prompts/structures.md`（二元对比、否定列举、公式化结构等）。
 - **去AI味改写示例**读 `prompts/examples.md`（含网文、技术、营销、学术场景）。
+- 去 AI 味执行流程已内置在本 SKILL.md，不再加载外部 `humanizer`。
 - AI / 科技 / 产业稿额外读 `references/ai-tech-writing-guide.md`。
-- 做封面或正文图前读 `references/baoyu-style-index.md`（三大 baoyu skill 风格索引 + 自动匹配规则）。
+- 做封面或正文图前优先使用本 SKILL.md 的“内置视觉生成流程”；需要完整风格表时可读 `references/baoyu-style-index.md`，但不要加载外部 baoyu skills。
 - 需要 Swiss Minimal 封面参数时读 `references/swiss-cover-usage.md`。
 - 排查字体方框字读 `references/image-font-tofu-debug-2026-05.md`。
 - 查完整历史规则或旧流程时：历史参考文件已清理，以 SKILL.md 和 `prompts/quality-and-risk.md` 为准。
@@ -105,26 +109,45 @@ python3 scripts/run.py publish_pipe.py --input article.md --cover cover.png --ac
 - 2000-4000 字正文应至少使用 3 种非段落元素；表格、列表、引用、代码块等规则见 `prompts/markdown-elements.md`。
 - 写完整篇后自检：如果全是纯段落，没有表格 / 列表 / 引用 / 代码块，直接重写结构。
 
-## 去 AI 味（可选后处理）
+## 去 AI 味（已集成到写作流程）
 
-**可选步骤**：如果用户要求"去 AI 味""降 AI 味""让文章更像人写的"或文章读起来过于书面化，使用已安装的 `humanizer` skill（位于 `skills/unclecheng-reduce-ai-perception-v2/`）进行后处理。
+**已集成到 `prompts/quality-and-risk.md` E 节，并合并原 `humanizer` 的执行流程。** 这不是可选后处理步骤，写正文时必须遵守去 AI 味规则。
 
-**触发场景**：
-- 用户明确要求"去 AI 味"或类似表述
-- 文章读起来过于工整、缺乏人味（如全是陈述句、缺少口语化表达、标点过于规范）
+**核心规则**（详见 `prompts/quality-and-risk.md` E 节）：
+- **禁用标点**：正文中不使用冒号`：`、破折号`——`、双引号`""`。引用用`「」`或直接不加引号。
+- **禁用句式**：不用"不是A，而是B"（直接写B）、"，带着……"万能状语、"仿佛/犹如/宛若"。
+- **禁用连接词**：不用"此外""同时""值得注意的是""需要指出的是""综上所述""首先/其次/最后"。
+- **句式断裂**：在情绪高点或转折点，用极短句独立成段制造停顿。全文至少2-3处。
+- **口语化表达**：使用"怎么说呢""你品品""你说离不离谱"等口语词组。
+- **第一人称**：适当用"我"，"我看到这儿的时候愣了一下"说明有个真人在想。
+- **承认复杂性**：真人有矛盾心理，"这东西确实厉害，但总让人有点不舒服"比"这令人印象深刻"强。
 
-**处理方式**：
-1. 加载 humanizer skill（`skill_view(name='unclecheng-reduce-ai-perception-v2')`）
-2. 按 skill 流程执行：扫描禁用词/标点 → 诊断分级 → 执行修改（去泛化 → 去书面化 → 回自然感）→ 四层自检（L1-L4）
-3. 输出修改统计和质检报告
+**完整参考文件**：
+- `prompts/banned-words.md`：禁用词与句式表（含标点禁令、高频踩雷词、推荐口语化词组）
+- `prompts/structures.md`：结构性问题清单（二元对比、否定列举、公式化结构等）
+- `prompts/examples.md`：改写示例库（含网文、技术、营销、学术场景）
 
-**关键改动点**：
-- 禁用标点：冒号→逗号，破折号→删除或逗号，双引号→「」
-- 禁用词替换：AI 高频连接词（"值得注意的是""不可否认"等）→ 删除或口语化
-- 句式断裂：在情绪高点或转折点用极短句独立成段
-- 口语化注入：加入"说实话""你品品""怎么说呢"等口语词组
+**内置 humanizer 执行流程**（写完初稿后执行）：
+1. **扫描 AI 痕迹**：标记禁用词、标点违规、结构问题、模板化小标题、过度总结、万能三段式。
+2. **诊断分级**：
+   - 轻度：少量书面连接词或节奏太整齐，局部改。
+   - 中度：段落像报告、标题泛化、观点没有人味，按段重写。
+   - 重度：像洗稿或 AI 综述，重排结构后重写。
+3. **Pass 1 去泛化**：删除“重要的是 / 值得注意 / 综上 / 未来可期 / 深刻影响 / 关键因素”等空话，把每句落到具体事实、数字、场景或判断。
+4. **Pass 2 去书面化**：把“此外 / 同时 / 首先其次最后 / 需要指出的是 / 由此可见”改成自然转场，能不用转场就不用。
+5. **Pass 3 加活人感**：加入第一人称、短句停顿、矛盾心理、轻微吐槽和口语表达。不要装成无菌百科。
+6. **最后自问一次**：这段为什么一眼像 AI？如果答案是“太顺、太满、太正确、没有人的犹豫”，继续改。
 
-**注意**：这不是默认步骤，只在用户要求或文章明显过于书面化时使用。
+**重点清除的 AI 写作模式**：
+- 意义膨胀：动不动“标志着 / 体现了 / 深刻改变 / 重要意义”。
+- 泛化分析：很多“推动、赋能、重塑、升级”，但没有具体机制。
+- 三件套结构：背景、原因、影响；机遇、挑战、未来；首先、其次、最后。
+- 假权威：行业人士、专家认为、媒体报道，但不给具体来源。
+- 否定并列：不是 A，而是 B；不仅是 A，更是 B。公众号正文里能直说 B 就直说 B。
+- 结尾鸡汤：未来可期、值得期待、让我们拭目以待。
+- 过度装饰：emoji、机械加粗、冒号式列表标题、破折号堆叠。
+
+**目标**：不是无菌文字，而是「有见识的普通人在认真聊一件打动他的事」。
 
 ## 配图快路径
 
@@ -185,26 +208,158 @@ python3 scripts/run.py render_cover_swiss.py \
 }
 ```
 
-**正文图风格自动匹配**：根据文章内容从三大 baoyu skill（article-illustrator / comic / infographic）中自动选择最合适的风格组合。详见 `references/baoyu-style-index.md`。
+## 内置视觉生成流程（已合并 baoyu 三件套）
 
-- **匹配流程**：分析文章内容信号 → 查 `baoyu-style-index.md` 的"内容类型 → 风格匹配表" → 选择推荐 Skill + Type/Layout + Style/Preset → 加载对应 baoyu skill 构造提示词。
-- **生成模型**：统一使用 **Agnes Image 2.1 Flash**（`agnes-image-2.1-flash`）。
-- **独立配图规则**：双账号各自生成各自的配图，根据文章内容自动选择合适风格。
-- **正文图去同质化**：不要默认每篇都用 `baoyu-comic + dramatic/neutral + 1024x576`。按内容在信息图、场景图、对比图、结构图、时间线图之间选择；短文可以 0 张正文图，表格/列表能解决的信息不强行生图。
-- **中文字硬规则**：Agnes 模型对中文极不稳定。**提示词中最多出现 1-2 个中文主题词**，其余信息用英文关键词、画面元素、表情、构图表达。不要在提示词里要求多行中文说明、对话框、标签文字。如需精确中文文字，用 Python/PIL 后期叠加。
-- **默认比例 1024x576（16:9 宽图）**，适合公众号正文嵌入。竖图场景用 576x1024。
-- **Agnes API 调用规范**：
-  - Base URL：`https://apihub.agnes-ai.com/v1/images/generations`（注意是 `apihub` 不是 `api`）
-  - 模型固定：`agnes-image-2.1-flash`
-  - 环境变量：`AGNES_API_KEY`
-  - 超时 420 秒；返回 URL 用 `curl -sSL --max-time 60` 下载
-  - 下载失败重试一次
-  - **⚠️ 代理绕过**：系统环境设置了 `https_proxy=http://127.0.0.1:7890`，会导致 Agnes API 的 SSL 握手失败（`SSL_ERROR_SYSCALL`）。所有 curl 调用 Agnes API 时必须加 `--noproxy '*'`，包括生成请求和图片下载。示例：
-    ```bash
-    curl -sSL --max-time 420 --noproxy '*' \
-      -X POST "https://apihub.agnes-ai.com/v1/images/generations" \
-      -H "Authorization: Bearer $AGNES_KEY" ...
-    ```
+本节合并原 `baoyu-article-illustrator`、`baoyu-comic`、`baoyu-infographic` 中适合公众号的执行流程。公众号任务中不要再加载这三个外部 skill。
+
+### 视觉任务总流程
+
+1. **判断是否需要正文图**：只有数据、对比、流程演化、结构关系四类内容才配图。纯观点、单一概念、列表能说清的内容不配图。
+2. **选图位**：先确定图片服务哪一段观点，再写 `<!-- img:filename.png -->`。不确定就不要先加 marker。
+3. **选视觉类型**：从文章配图、知识漫画、信息图三类中选一个，不要每篇默认漫画。
+4. **写提示词记录**：在 job 目录保存 `prompts/body-xx.md` 或至少把 prompt 写入 `visual-meta.json`，保留可复现记录。
+5. **调用 Agnes**：统一 `agnes-image-2.1-flash`，1024x576，`--noproxy '*'`，420 秒超时，下载失败重试一次。
+6. **发布注入**：Markdown 保留 `<!-- img:... -->`，发布时通过 `--images` 传绝对路径，由 `publish_pipe.py` 统一注入。
+
+### 配图数量
+
+| 正文字数 | 正文图数量 | 规则 |
+|---|---:|---|
+| < 2500 字 | 0-1 张 | 能不用就不用 |
+| ≥ 2500 字 | 0-2 张 | 只给信息密度最高的位置 |
+
+数量永远可以是 0。不要为了“专业感”凑图。
+
+### 视觉类型一：文章配图（原 baoyu-article-illustrator）
+
+适合大多数公众号正文图。核心是 **Type × Style × Palette**。
+
+| Type | 适用内容 | 推荐 Style / Preset |
+|---|---|---|
+| `infographic` | 数据、指标、技术概念 | `blueprint` / `editorial` / `vector-illustration` |
+| `scene` | 生活场景、情绪、个人故事 | `warm` / `screen-print` / `watercolor` |
+| `flowchart` | 流程、步骤、工作流 | `vector-illustration` / `notion` / `sketch-notes` |
+| `comparison` | A vs B、前后对照 | `vector-illustration` / `ink-notes` / `elegant` |
+| `framework` | 架构、系统关系、分层模型 | `blueprint` / `ink-notes` / `vector-illustration` |
+| `timeline` | 历史、演化、里程碑 | `elegant` / `warm` / `vintage` |
+
+常用 preset：
+- `tech-explainer`：技术、API、指标解释。
+- `system-design`：系统关系、产业链结构。
+- `knowledge-base`：概念解释、教程。
+- `versus`：技术对比、平台对比、前后变化。
+- `data-report`：数据新闻、指标报告。
+- `storytelling`：成长、生活、反思。
+- `opinion-piece`：观点、评论、文化类文章。
+
+提示词结构必须包含：
+
+```text
+TYPE: infographic / scene / flowchart / comparison / framework / timeline
+SUBJECT: article-specific subject, not generic technology/data
+ZONES: 2-4 visual zones, each tied to an article point
+LABELS: max 1-2 short Chinese keywords, otherwise English visual labels
+COLORS: palette and contrast
+STYLE: selected style details
+ASPECT: 16:9, 1024x576
+NEGATIVE: no dense Chinese text, no fake UI text, no watermark, no logo
+```
+
+### 视觉类型二：知识漫画（原 baoyu-comic）
+
+只在文章有叙事、人物、冲突、教程或轻松解释时使用。不要把每篇产业分析都画成漫画。
+
+| 画风 / Art | 适用内容 | Tone | Layout |
+|---|---|---|---|
+| `ligne-claire` | 教育、历史、人物、平衡叙事 | neutral / warm | standard / cinematic |
+| `manga` | 情绪、动作、年轻化表达 | dramatic / energetic / warm | mixed / cinematic |
+| `realistic` | 严肃人物故事、真实场景 | warm / dramatic | cinematic |
+| `ink-brush` | 东方美学、哲学、武侠隐喻 | action / dramatic | splash / cinematic |
+| `chalk` | 教学解释、课堂感 | neutral | standard |
+| `minimalist` | 四格、轻吐槽、概念解释 | neutral | four-panel |
+
+常用 preset：
+- `four-panel`：轻吐槽、反差、起承转合。
+- `concept-story`：一个抽象概念用角色经历讲明白。
+- `ohmsha`：技术概念漫画化解释，少用大段对白。
+
+漫画提示词要包含：角色、场景、动作、冲突、画面节奏。中文对白最多 1-2 个短词；不要让模型生成多格中文台词。
+
+### 视觉类型三：信息图（原 baoyu-infographic）
+
+只在信息结构本身比画面更重要时使用。核心是 **Layout × Style**。
+
+| 内容信号 | Layout | Style |
+|---|---|---|
+| 时间线 / 历史 | `linear-progression` | `craft-handmade` / `technical-schematic` |
+| A vs B | `binary-comparison` | `corporate-memphis` / `bold-graphic` |
+| 多因素对比 | `comparison-matrix` | `corporate-memphis` |
+| 分层模型 | `hierarchical-layers` | `craft-handmade` / `technical-schematic` |
+| 中心概念扩散 | `hub-spoke` | `hand-drawn-edu` |
+| 技术结构拆解 | `structural-breakdown` | `technical-schematic` |
+| 多主题概览 | `bento-grid` | `craft-handmade` / `morandi-journal` |
+| 表面 vs 隐藏 | `iceberg` | `craft-handmade` |
+| 问题到解决 | `bridge` | `corporate-memphis` |
+| 指标 / KPI | `dashboard` | `corporate-memphis` |
+| 分类集合 | `periodic-table` | `bold-graphic` |
+| 旅程 / 里程碑 | `winding-roadmap` | `storybook-watercolor` |
+| 循环流程 | `circular-flow` | `craft-handmade` |
+| 高密度模块 | `dense-modules` | `morandi-journal` / `pop-laboratory` / `retro-pop-grid` |
+
+信息图提示词要先把内容整理成 3-6 个模块，每个模块只表达一个概念。严禁把一整段中文塞进图里。
+
+### 自动匹配表
+
+| 文章内容信号 | 视觉类型 | 推荐组合 |
+|---|---|---|
+| API、指标、技术深度 | 文章配图 | infographic + blueprint |
+| 概念解释、教程、how-to | 文章配图 | infographic + vector-illustration |
+| 产品指南、SaaS 文档 | 文章配图 | infographic + notion |
+| 步骤流程、工作流 | 文章配图 | flowchart + vector-illustration |
+| 架构、系统关系 | 文章配图 | framework + blueprint |
+| A vs B、前后对比 | 文章配图 | comparison + vector / ink-notes |
+| 个人故事、成长、反思 | 文章配图 | scene + warm |
+| 历史、演化、里程碑 | 文章配图 | timeline + elegant / warm |
+| 观点、评论、文化 | 文章配图 | scene + screen-print |
+| 叙事、场景、人物 | 知识漫画 | ligne-claire + warm / manga + dramatic |
+| 四格轻吐槽 | 知识漫画 | minimalist + neutral + four-panel |
+| 高密度总结、数据可视化 | 信息图 | 按结构选 layout + style |
+| 多主题概览 | 信息图 | bento-grid + craft-handmade |
+| 分类集合 | 信息图 | periodic-table + bold-graphic |
+| 表面 vs 隐藏 | 信息图 | iceberg + craft-handmade |
+
+### Agnes API 调用规范
+
+- Base URL：`https://apihub.agnes-ai.com/v1/images/generations`（注意是 `apihub` 不是 `api`）。
+- 模型固定：`agnes-image-2.1-flash`。
+- 环境变量：`AGNES_API_KEY`。
+- 超时 420 秒；返回 URL 用 `curl -sSL --max-time 60 --noproxy '*'` 下载。
+- 下载失败重试一次。
+- 所有输出路径用绝对路径。
+- Agnes 对中文极不稳定，提示词中最多 1-2 个中文主题词，其余用英文画面元素表达。
+
+```bash
+RESPONSE=$(curl -sSL --max-time 420 --noproxy '*' \
+  -X POST "https://apihub.agnes-ai.com/v1/images/generations" \
+  -H "Authorization: Bearer $AGNES_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "agnes-image-2.1-flash",
+    "prompt": "<structured visual prompt>",
+    "size": "1024x576",
+    "n": 1
+  }')
+URL=$(printf '%s' "$RESPONSE" | jq -r '.data[0].url')
+curl -sSL --max-time 60 --noproxy '*' "$URL" -o /absolute/path/to/body-image.png
+```
+
+### 视觉去同质化硬规则
+
+- 每次生成前写 `visual-meta.json`，记录 cover/body 的 archetype、layout、subject、prompt_key。
+- prompt_key 必须包含文章具体主题，不能是 `tech-data-connection` 这种泛词。
+- 同账号近 7 天避免重复：封面原型、构图、视觉主体、正文图类型。
+- 短文可不配正文图；表格能表达的信息不强行生图。
+- 配图失败不阻断主流程，移除 marker、跳过 `--images`，最终报告标注“配图失败，已跳过”。
 
 ## 排版快路径
 
@@ -460,7 +615,7 @@ Cron prompt（`~/.hermes/cron/jobs.json`）和本 skill 必须保持一致。升
 
 1. **账号人设三处一致**：SKILL.md 双账号差异段 + AGENTS.md "Two accounts" 段 + prompt 定位描述。
 2. **AI 标识措辞**：prompt 中"AI 辅助"只在报告层，文章正文硬门禁（`publish_pipe.py` AI 披露扫描）不可突破。
-3. **无参考副本**：skill 目录不存 cron prompt 副本，`jobs.json` 是唯一真相源。
+3. **副本同步**：`jobs.json` 是运行真相源；`cron-prompts/` 是维护镜像，修改时必须同步。
 4. **发布命令模式**：prompt 中用 `--input --job-dir`（cron 最简路径），路径参数全绝对。
 
 详细冲突记录和修复方式见 `references/cron-prompt-sync-2026-07.md`。
