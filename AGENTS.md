@@ -32,11 +32,10 @@ Keep the skill lightweight. Do not load all references.
 - Main entry: `SKILL.md`
 - Writing guardrails: `prompts/quality-and-risk.md`
 - Markdown elements: `prompts/markdown-elements.md`
-- Required AI-flavor pass: `references/humanizer-runtime.md`
+- Required AI-flavor pass: external `humanizer` skill
 - Required visual pass: `references/visual-generation-light.md`
-- Optional examples: `prompts/examples.md`
 
-Do not use deleted legacy workflows, external humanizer/visual skills, or old design docs.
+Do not use deleted legacy workflows, xiaohu internal humanizer files, external visual skills, or old design docs. External `humanizer` is now the required AI-flavor pass.
 
 ## Pipeline architecture
 
@@ -60,4 +59,4 @@ Do not use deleted legacy workflows, external humanizer/visual skills, or old de
 - `xiaocong` / 熵增时刻 — tech, industry, AI tools, company and workflow changes.
 - `yeluzi` / 思想的野路子丶 — livelihood, consumption, workplace, platform rules, ordinary life.
 
-Use natural article organization. The current goal is safe, clear, useful, batch-friendly articles with a required AI-flavor reduction pass.
+Use natural article organization. The current goal is safe, clear, useful, batch-friendly articles with a required external `humanizer` AI-flavor reduction pass.

@@ -14,14 +14,13 @@
 
 ## 1. 必须遵循
 
-加载并服从 `xiaohu-wechat-publishing` skill。按阶段读取：
+加载并服从 `xiaohu-wechat-publishing` 和外部 `humanizer` skill。按阶段执行：
 
 - 写作前：`prompts/quality-and-risk.md`、`prompts/markdown-elements.md`
-- 初稿后：`references/humanizer-runtime.md`
+- 初稿后：使用外部 `humanizer` skill，保存 `article.raw.md`、`article.md` 和 `humanizer-report.md`
 - 配图前：`references/visual-generation-light.md`
-- 去 AI 味卡住时才读：`prompts/examples.md`
 
-不要读取旧历史设计文档、完整视觉风格表、外部 humanizer/baoyu skill。
+不要读取旧历史设计文档、完整视觉风格表、baoyu skill，或已删除的 xiaohu 内部去味文件。
 
 ## 2. 选题边界
 
@@ -37,8 +36,8 @@
 2. 读取 `publish-history.jsonl`，只看当日早间标题/大意，以及 `yeluzi` 近期标题/大意，避免重复。
 3. 找 3 个安全候选，每个候选用一句话说明事件、来源数量、有用信息点、风险低/中/高。
 4. 选一个风险低、信息够、容易讲清楚的题。没有安全题就停止。
-5. 写 `article.md`：1500-3000 字，至少 2 个独立来源，开头 3 段内说清楚发生了什么和为什么值得看。
-6. 读取 `references/humanizer-runtime.md`，对全文做去 AI 味。AI 味风险为高时继续重写，不发布。
+5. 写初稿到 `article.raw.md`：1500-3000 字，至少 2 个独立来源，开头 3 段内说清楚发生了什么和为什么值得看。
+6. 使用外部 `humanizer` skill 对 `article.raw.md` 做去 AI 味，输出终稿 `article.md`，并写 `humanizer-report.md`。AI 味风险为高时继续重写，不发布。
 7. 读取 `references/visual-generation-light.md`。生成 `cover.png`；正文图按内容判断 0-2 张，并写 `visual-meta.json`。
 8. dry-run 通过后推草稿箱；成功后历史只记录标题和文章大意。
 

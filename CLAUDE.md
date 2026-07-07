@@ -27,11 +27,10 @@ The skill is intentionally lightweight. Do not load all references.
 - Main routing: `SKILL.md`
 - Lightweight risk guardrails: `prompts/quality-and-risk.md`
 - Markdown elements: `prompts/markdown-elements.md`
-- Required AI-flavor reduction: `references/humanizer-runtime.md`
+- Required AI-flavor reduction: external `humanizer` skill
 - Required visual stage: `references/visual-generation-light.md`
-- Optional rewrite examples: `prompts/examples.md`
 
-Deleted/legacy workflows should not be restored: full baoyu style tables, external humanizer skill copies, old structure-signature anti-low-quality system, and long cron troubleshooting notes.
+Deleted/legacy workflows should not be restored: full baoyu style tables, xiaohu internal humanizer files, old structure-signature anti-low-quality system, and long cron troubleshooting notes. External `humanizer` is the required AI-flavor pass.
 
 ## Architecture
 

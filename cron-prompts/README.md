@@ -11,7 +11,7 @@
 
 - Cron prompt 只保留任务差异和执行顺序，不复制长规则。
 - 写作前读 `prompts/quality-and-risk.md` 和 `prompts/markdown-elements.md`。
-- 初稿后必读 `references/humanizer-runtime.md`。
+- 初稿后必须使用外部 `humanizer` skill，并保存 `article.raw.md`、`article.md`、`humanizer-report.md`。
 - 配图前必读 `references/visual-generation-light.md`。
 - 防重只看近期标题和文章大意。
 - 报告只输出标题、大意、来源数量、去 AI 味结果、视觉结果、发布结果和产物路径。

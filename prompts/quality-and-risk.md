@@ -32,7 +32,7 @@
 
 ## 4. 去 AI 味
 
-初稿完成后必须读取 `references/humanizer-runtime.md`。AI 味风险为高时，不得排版发布。
+初稿完成后必须使用外部 `humanizer` skill。AI 味风险为高时，不得排版发布。
 
 ## 5. 发布前速查
 

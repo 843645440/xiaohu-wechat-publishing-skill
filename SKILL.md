@@ -1,8 +1,8 @@
 ---
 name: xiaohu-wechat-publishing
 description: |
-  Use when working with WeChat Official Account: topic planning, lightweight writing, AI-flavor reduction, cover/body visuals, formatting, and draft-box publishing. Triggers: 写公众号, 微信排版, 公众号文章, 推草稿箱, 发公众号, 熵增时刻, 思想的野路子丶, or packaging an article for WeChat.
-version: 5.1.0
+  Use when working with WeChat Official Account: topic planning, lightweight writing, external humanizer pass, cover/body visuals, formatting, and draft-box publishing. Triggers: 写公众号, 微信排版, 公众号文章, 推草稿箱, 发公众号, 熵增时刻, 思想的野路子丶, or packaging an article for WeChat.
+version: 5.2.0
 author: Hermes curator
 license: MIT
 metadata:
@@ -12,11 +12,11 @@ metadata:
 
 # 小虎公众号轻量生产管线
 
-这是唯一主 skill。目标不是每篇都做成深度专栏，而是稳定批量产出：避开明显风控，有一点有用信息，表达清楚，读起来不像低质 AIGC。
+这是公众号主 skill。目标不是每篇都做成深度专栏，而是稳定批量产出：避开明显风控，有一点有用信息，表达清楚。去 AI 味统一交给外部 `humanizer` skill，xiaohu 内部不再维护自有去味规则。
 
 ## 默认原则
 
-- 只加载 `xiaohu-wechat-publishing`，不要额外加载 humanizer / baoyu 相关 skill。
+- 必须加载 `xiaohu-wechat-publishing` 和外部 `humanizer` skill；不要加载 baoyu 相关 skill。
 - 主流程按阶段读取少量内部文件，不全量加载 references。
 - 正文、封面、图片里都不要出现任何 AI 身份披露；发布脚本会硬拦截。
 - 凭据只从 `~/.hermes/.env` 读取；不要把 app_id/app_secret 写进仓库文件。
@@ -27,11 +27,10 @@ metadata:
 按阶段读，不要提前读无关文件：
 
 1. 写作前读 `prompts/quality-and-risk.md` 和 `prompts/markdown-elements.md`。
-2. 初稿完成后必须读 `references/humanizer-runtime.md` 做去 AI 味。
+2. 初稿完成后必须使用外部 `humanizer` skill 做去 AI 味，不读取 xiaohu 内部去味文件。
 3. 生成封面/正文图前必须读 `references/visual-generation-light.md`。
-4. 去 AI 味卡住时才读 `prompts/examples.md`。
 
-不要读取旧人设、完整视觉风格库、复杂结构防重或长篇排障材料。
+不要读取旧人设、完整视觉风格库、复杂结构防重、长篇排障材料，或已删除的 xiaohu 内部去味文件。
 
 ## 轻量主流程
 
@@ -39,7 +38,7 @@ metadata:
 2. 找安全选题：避开政治、敏感社会议题、财经预测、投资建议、未经证实爆料。
 3. 查近期历史：只看同账号最近标题和文章大意，避免写同一件事或同一大意。
 4. 写初稿：1500-3000 字，至少 2 个信息源，重要事实尽量 3 个源；不规定固定结构。
-5. 去 AI 味：读 `references/humanizer-runtime.md`，AI 味风险为高时不得发布。
+5. 去 AI 味：调用外部 `humanizer` skill 重写初稿；建议保存 `article.raw.md`、`article.md` 和 `humanizer-report.md`。AI 味风险为高时不得发布。
 6. 生成视觉：封面必做；正文图进入判断，按文章类型生成 0-2 张。
 7. 排版和发布：先 dry-run，通过后推草稿箱。
 8. 归档：只记录标题和 100-200 字文章大意，供后续防重。
@@ -55,9 +54,17 @@ metadata:
 
 ## 去 AI 味硬规则
 
-每篇正文写完后都必须执行去 AI 味。只在这个阶段读取 `references/humanizer-runtime.md`。
+每篇正文写完后都必须执行外部 `humanizer` skill。xiaohu skill 内部不再维护 `references/humanizer-runtime.md` 或去味示例文件。
 
-去 AI 味不是可选润色，而是进推荐池前的基本门槛。终稿必须自评：
+推荐产物：
+
+```text
+article.raw.md          # 初稿
+article.md              # humanizer 后终稿
+humanizer-report.md     # 外部 humanizer 检查与修改摘要
+```
+
+外部 humanizer 完成后，终稿必须自评：
 
 ```text
 AI 味风险：低 / 中 / 高
@@ -66,7 +73,7 @@ AI 味风险：低 / 中 / 高
 是否需要重写：是 / 否
 ```
 
-若 AI 味风险为高，重写或继续去 AI 味，不得进入排版发布。
+若 AI 味风险为高，继续用外部 `humanizer` skill 重写，不得进入排版发布。
 
 ## 视觉要求
 
@@ -75,6 +82,11 @@ AI 味风险：低 / 中 / 高
 - 正文图只走轻量路径：信息图、场景图、对比图、流程/结构图。
 - 生成前在 job 目录写 `visual-meta.json`，记录本次 prompt 意图，方便人工复盘；不再把视觉元数据写入长期防重历史。
 - 图片失败不阻断主流程：封面失败可跳过封面参数，正文图失败删除 marker，最终报告说明“配图失败，已跳过”。
+
+### 正文图注入避坑
+
+`publish_pipe.py` 只有一个正文图注入入口：`image_injector.py`。写稿时不要同时在 Markdown 里写 `![...](body-1.png)` 又在发布命令里传 `--images body-1.png`，否则 HTML 可能出现重复图片并导致上传日志里同一张图上传两次。Cron 推荐做法：正文只放段落和图位意图，生成图片后通过 `--images /abs/job/body-1.png` 交给管线按位置注入；如果选择 Markdown 原生图片，就不要再把同一文件传给 `--images`。
+
 
 ## 运行命令
 
