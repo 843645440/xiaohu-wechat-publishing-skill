@@ -36,7 +36,7 @@ Keep the skill lightweight. Do not load all references.
 - Required AI-flavor pass: external `humanizer` skill
 - Required visual pass: `references/visual-generation-light.md`
 
-Do not use deleted legacy workflows, xiaohu internal humanizer files, external visual skills, or old design docs. External `humanizer` is now the required AI-flavor pass.
+Do not read `templates/cover-preset-pool.json` during normal runs; `render_editorial_cover.py` consumes it internally. Do not use deleted legacy workflows, xiaohu internal humanizer files, external visual skills, or old design docs. External `humanizer` is now the required AI-flavor pass.
 
 `.archive/` contains inactive historical backups only. Do not load it during normal writing, visual generation, formatting, or publishing.
 
@@ -47,6 +47,7 @@ Do not use deleted legacy workflows, xiaohu internal humanizer files, external v
 - `format.py` — Markdown to WeChat-compatible inline-styled HTML.
 - `image_injector.py` — only source of body-image injection.
 - `render_editorial_cover.py` — active magazine-style cover renderer.
+- `templates/cover-preset-pool.json` — renderer-only cover presets; agents should not load this file during routine generation.
 - `publish_pipe.py` — format → inject → validate → publish draft.
 - `publish_history.py` — AI disclosure hard scan, high-risk soft scan, minimal title/summary history.
 - `doctor.py` — environment preflight.
@@ -57,6 +58,7 @@ Do not use deleted legacy workflows, xiaohu internal humanizer files, external v
 - Only validated artifacts may be published.
 - Cron jobs should pass `--fail-on-low-quality-warning`; it now stops only on recent title/summary similarity.
 - History is intentionally minimal: account, title, summary, media_id. Do not reintroduce structure or visual signatures.
+- Do not add OCR, image similarity, visual scoring, or other vision-dependent checks.
 
 ## Two accounts
 

@@ -2,7 +2,7 @@
 """Render the reusable magazine-style WeChat cover.
 
 The active cover contract uses short title-card fields:
-article_title, cover_title, cover_subtitle, highlight, and tags.
+article_title, cover_title, cover_subtitle, and highlight.
 Legacy Swiss/Brutalism/Editorial V2 files are archived under
 `.archive/legacy-cover-logic/` and are not part of runtime.
 """
@@ -10,8 +10,10 @@ Legacy Swiss/Brutalism/Editorial V2 files are archived under
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import hashlib
 import html
+import json
 import shutil
 import subprocess
 from pathlib import Path
@@ -19,18 +21,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATE_PATH = BASE_DIR / "templates" / "cover-magazine-v1.html"
+PRESET_PATH = BASE_DIR / "templates" / "cover-preset-pool.json"
 PERSONA_DIR = BASE_DIR / "assets" / "creator-persona" / "poses" / "transparent"
 
 VARIANTS = ("portrait-anchor", "diagonal-newsstand", "black-label")
 PERSONA_MODES = ("half", "shoulder", "bust")
-POSES = (
-    "pose-03-arms-folded.png",
-    "pose-01-seated-thinking.png",
-    "pose-02-walking.png",
-    "pose-04-reading-paper.png",
-    "pose-05-pointing-trend.png",
-    "pose-06-back-glance.png",
-)
 
 ACCOUNT_BRANDS = {
     "xiaocong": "熵增时刻",
@@ -55,9 +50,17 @@ def render_template(template: str, mapping: dict[str, str]) -> str:
     return template
 
 
-def pick(options: tuple[str, ...], seed: str) -> str:
+def weighted_pick(options: list[dict[str, object]], seed: str) -> dict[str, object]:
+    total = sum(int(item.get("weight", 1)) for item in options)
+    if total <= 0:
+        raise SystemExit("cover preset weights must be positive")
     digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
-    return options[int(digest[:8], 16) % len(options)]
+    cursor = int(digest[:10], 16) % total
+    for item in options:
+        cursor -= int(item.get("weight", 1))
+        if cursor < 0:
+            return item
+    return options[-1]
 
 
 def safe_text(value: str | None, fallback: str = "") -> str:
@@ -72,20 +75,127 @@ def fit_text(value: str, limit: int) -> str:
     return value[: max(1, limit - 1)] + "…"
 
 
+def visual_width(value: str) -> float:
+    width = 0.0
+    for char in value.strip():
+        if char.isspace():
+            width += 0.32
+        elif char.isascii():
+            width += 0.56
+        else:
+            width += 1.0
+    return width
+
+
+def fit_visual_text(value: str, max_width: float) -> str:
+    value = (value or "").strip()
+    if visual_width(value) <= max_width:
+        return value
+
+    ellipsis = "…"
+    budget = max_width - visual_width(ellipsis)
+    output = []
+    used = 0.0
+    for char in value:
+        char_width = visual_width(char)
+        if used + char_width > budget:
+            break
+        output.append(char)
+        used += char_width
+    return "".join(output).rstrip() + ellipsis
+
+
 def title_size_class(title: str) -> str:
-    length = len(title.strip())
-    if length <= 4:
+    stripped = title.strip()
+    width = visual_width(title)
+    wide_chars = sum(1 for char in stripped if not char.isascii())
+    ascii_chars = sum(1 for char in stripped if char.isascii() and not char.isspace())
+    if width <= 4.5 and (wide_chars <= 3 or ascii_chars >= 3):
         return "title-short"
-    if length <= 7:
+    if width <= 7.0:
         return "title-medium"
     return "title-long"
 
 
-def resolve_persona(cli_value: str | None, seed: str) -> Path:
+def subtitle_size_class(subtitle: str) -> str:
+    width = visual_width(subtitle)
+    if width <= 10.0:
+        return "subtitle-short"
+    if width <= 12.0:
+        return "subtitle-medium"
+    return "subtitle-long"
+
+
+def highlight_size_class(highlight: str) -> str:
+    width = visual_width(highlight)
+    if width <= 5.5:
+        return "highlight-short"
+    if width <= 6.8:
+        return "highlight-medium"
+    return "highlight-long"
+
+
+def issue_no(seed: str) -> str:
+    digest = hashlib.sha256((seed + ":issue").encode("utf-8")).hexdigest()
+    return str(100 + (int(digest[:6], 16) % 800))
+
+
+def load_presets() -> list[dict[str, object]]:
+    data = json.loads(PRESET_PATH.read_text(encoding="utf-8"))
+    presets: list[dict[str, object]] = []
+    for item in data.get("presets", []):
+        name = str(item.get("name", "")).strip()
+        if not name:
+            continue
+        try:
+            weight = int(item.get("weight", 1))
+        except Exception:
+            weight = 1
+        presets.append({
+            "name": name,
+            "variant": str(item.get("variant", "")).strip(),
+            "persona_mode": str(item.get("persona_mode", "")).strip(),
+            "persona": str(item.get("persona", "")).strip(),
+            "weight": max(1, weight),
+        })
+    if not presets:
+        raise SystemExit(f"no cover presets found: {PRESET_PATH}")
+    seen: set[str] = set()
+    for preset in presets:
+        name = str(preset["name"])
+        if name in seen:
+            raise SystemExit(f"duplicate cover preset: {name}")
+        seen.add(name)
+        if preset["variant"] not in VARIANTS:
+            raise SystemExit(f"invalid cover preset variant: {name}")
+        if preset["persona_mode"] not in PERSONA_MODES:
+            raise SystemExit(f"invalid cover preset persona_mode: {name}")
+        if not (PERSONA_DIR / str(preset["persona"])).exists():
+            raise SystemExit(f"cover preset persona image not found: {name}")
+    return presets
+
+
+def select_preset(
+    presets: list[dict[str, object]],
+    requested: str,
+    account_style: str,
+    seed_period: str,
+    seed: str,
+) -> tuple[str, dict[str, object]]:
+    presets_by_name = {str(item["name"]): item for item in presets}
+    if requested == "auto":
+        preset = weighted_pick(presets, f"{account_style}:{seed_period}:{seed}:preset")
+        return str(preset["name"]), preset
+    if requested not in presets_by_name:
+        raise SystemExit(f"unknown cover preset: {requested}")
+    return requested, presets_by_name[requested]
+
+
+def resolve_persona(cli_value: str | None, preset: dict[str, object]) -> Path:
     if cli_value:
         path = Path(cli_value).expanduser().resolve()
     else:
-        path = (PERSONA_DIR / pick(POSES, seed + ":pose")).resolve()
+        path = (PERSONA_DIR / str(preset["persona"])).resolve()
     if not path.exists():
         raise SystemExit(f"persona image not found: {path}")
     return path
@@ -176,6 +286,8 @@ def main() -> None:
     parser.add_argument("--highlight", default="")
     parser.add_argument("--tags", default="")
     parser.add_argument("--brand", default="")
+    parser.add_argument("--preset", default="auto", help="Cover preset name, or auto")
+    parser.add_argument("--seed-period", default="", help="Stable preset rotation period, e.g. 2026-07")
     parser.add_argument("--variant", choices=(*VARIANTS, "auto"), default="auto")
     parser.add_argument("--persona-mode", choices=(*PERSONA_MODES, "auto"), default="auto")
     parser.add_argument("--persona", help="Path to transparent persona PNG")
@@ -188,24 +300,32 @@ def main() -> None:
     cover_title = args.cover_title or args.title_line1 or article_title
     cover_subtitle = args.cover_subtitle or args.title_line2 or args.kicker_text or "值得看的一次变化"
     highlight = args.highlight or args.impact_main or "新变化"
-    tags = args.tags or "趋势 / 观察 / 普通人"
+    # Kept for old commands; the active template hides category tags.
+    tags = args.tags or ""
     brand = args.brand or ACCOUNT_BRANDS[args.account_style]
 
-    cover_title = fit_text(cover_title, 10)
-    cover_subtitle = fit_text(cover_subtitle, 18)
-    highlight = fit_text(highlight, 8)
+    cover_title = fit_visual_text(cover_title, 9.0)
+    cover_subtitle = fit_visual_text(cover_subtitle, 15.0)
+    highlight = fit_visual_text(highlight, 8.0)
     seed = f"{args.account_style}:{article_title}:{cover_title}:{cover_subtitle}"
-    variant = pick(VARIANTS, seed + ":variant") if args.variant == "auto" else args.variant
-    persona_mode = pick(PERSONA_MODES, seed + ":mode") if args.persona_mode == "auto" else args.persona_mode
-    persona = resolve_persona(args.persona, seed)
+    presets = load_presets()
+    seed_period = args.seed_period.strip() or dt.date.today().strftime("%Y-%m")
+    preset_name, preset = select_preset(presets, args.preset, args.account_style, seed_period, seed)
+    variant = str(preset["variant"]) if args.variant == "auto" else args.variant
+    persona_mode = str(preset["persona_mode"]) if args.persona_mode == "auto" else args.persona_mode
+    persona = resolve_persona(args.persona, preset)
 
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     rendered = render_template(template, {
         "ACCOUNT_STYLE": safe_text(args.account_style),
         "VARIANT": safe_text(variant),
+        "PRESET": safe_text(preset_name),
         "PERSONA_MODE": safe_text(persona_mode),
         "TITLE_SIZE": safe_text(title_size_class(cover_title)),
+        "SUBTITLE_SIZE": safe_text(subtitle_size_class(cover_subtitle)),
+        "HIGHLIGHT_SIZE": safe_text(highlight_size_class(highlight)),
         "BRAND": safe_text(brand),
+        "ISSUE_NO": safe_text(issue_no(seed)),
         "ARTICLE_TITLE": safe_text(fit_text(article_title, 28)),
         "COVER_TITLE": safe_text(cover_title),
         "COVER_SUBTITLE": safe_text(cover_subtitle),

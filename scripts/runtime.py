@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Runtime helpers: find the right Python interpreter & TTY detection.
 
-Solves the recurring pain that some hosts have Pillow / playwright installed
+Solves the recurring pain that some hosts have runtime packages installed
 under /usr/bin/python3.12 but NOT under /usr/bin/python3 (3.10 / 3.11).
 
 Public API:

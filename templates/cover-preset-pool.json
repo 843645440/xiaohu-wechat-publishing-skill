@@ -1,0 +1,39 @@
+{
+  "presets": [
+    {
+      "name": "portrait-thinker",
+      "variant": "portrait-anchor",
+      "persona_mode": "shoulder",
+      "persona": "pose-01-seated-thinking.png",
+      "weight": 3
+    },
+    {
+      "name": "portrait-folded",
+      "variant": "portrait-anchor",
+      "persona_mode": "bust",
+      "persona": "pose-03-arms-folded.png",
+      "weight": 2
+    },
+    {
+      "name": "diagonal-thinker",
+      "variant": "diagonal-newsstand",
+      "persona_mode": "shoulder",
+      "persona": "pose-01-seated-thinking.png",
+      "weight": 3
+    },
+    {
+      "name": "black-label-thinker",
+      "variant": "black-label",
+      "persona_mode": "shoulder",
+      "persona": "pose-01-seated-thinking.png",
+      "weight": 2
+    },
+    {
+      "name": "black-label-folded",
+      "variant": "black-label",
+      "persona_mode": "bust",
+      "persona": "pose-03-arms-folded.png",
+      "weight": 2
+    }
+  ]
+}

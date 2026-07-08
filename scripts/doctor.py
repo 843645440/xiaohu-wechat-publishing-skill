@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 from workspace import ensure_workspace, workspace_root
-from render_editorial_cover import find_system_browser
+from render_editorial_cover import find_system_browser, load_presets
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -78,29 +78,25 @@ def main():
         required_mods = ["markdown"]
         if mode_requires_accounts(args.mode):
             required_mods.append("requests")
-        if args.mode == "all":
-            required_mods.append("PIL")
         for module in required_mods:
             r = subprocess.run([bin_path, "-c", f"import importlib.util,sys; sys.exit(0 if importlib.util.find_spec({module!r}) else 1)"],
                                capture_output=True, timeout=5)
             has = (r.returncode == 0)
             check(has, f"module {module} (in {bin_path})", f"missing module {module} in {bin_path}",
                   failures,
-                  fix=f"{bin_path} -m pip install --user --break-system-packages {module if module!='PIL' else 'pillow'}")
+                  fix=f"{bin_path} -m pip install --user --break-system-packages {module}")
     except Exception as e:
         print(f"WARN runtime.python_bin probe failed: {e}")
         fallback_mods = ["markdown"]
         if mode_requires_accounts(args.mode):
             fallback_mods.append("requests")
-        if args.mode == "all":
-            fallback_mods.append("PIL")
         for module in fallback_mods:
             check(
                 importlib.util.find_spec(module) is not None,
                 f"module {module}",
                 f"missing module {module}",
                 failures,
-                fix=f"python3 -m pip install --user --break-system-packages {module if module!='PIL' else 'pillow'}",
+                fix=f"python3 -m pip install --user --break-system-packages {module}",
             )
 
     browser_check_ok = True
@@ -137,10 +133,38 @@ def main():
     check(theme_count > 0, f"themes available: {theme_count}", "themes directory is empty/missing",
           failures, fix=f"ls {themes_dir}  # if missing, re-install skill via skillhub")
 
-    for template in ("preview.html", "gallery.html", "cover-magazine-v1.html", "editorial-body-modular-v1.html"):
+    for template in ("preview.html", "gallery.html", "cover-magazine-v1.html"):
         check((SKILL_DIR / "templates" / template).exists(),
               f"template {template}", f"missing template {template}",
               failures, fix=f"# re-install skill: skillhub --dir ~/.hermes/skills install xiaohu-wechat-publishing")
+
+    preset_path = SKILL_DIR / "templates" / "cover-preset-pool.json"
+    preset_exists = preset_path.exists()
+    check(
+        preset_exists,
+        "cover preset pool",
+        "missing cover-preset-pool.json",
+        failures,
+        fix=f"# re-install skill: skillhub --dir ~/.hermes/skills install xiaohu-wechat-publishing",
+    )
+    if preset_exists:
+        try:
+            preset_count = len(load_presets())
+            check(
+                preset_count > 0,
+                f"cover presets available: {preset_count}",
+                "cover preset pool has no presets",
+                failures,
+                fix=f"# restore presets in {preset_path}",
+            )
+        except (Exception, SystemExit) as exc:
+            check(
+                False,
+                "cover preset pool valid",
+                f"invalid cover preset pool: {exc}",
+                failures,
+                fix=f"python3 -m json.tool {preset_path}",
+            )
 
     env_path = Path.home() / ".hermes" / ".env"
     env_text = env_path.read_text(encoding="utf-8") if env_path.exists() else ""

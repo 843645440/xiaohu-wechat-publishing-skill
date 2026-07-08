@@ -11,12 +11,11 @@
   "article_title": "楼下超市，成了巨头的新战场",
   "cover_title": "楼下超市",
   "cover_subtitle": "外卖烧钱之后",
-  "highlight": "新战场",
-  "tags": "平台 / 消费 / 普通人"
+  "highlight": "新战场"
 }
 ```
 
-`article.md` 的 H1 使用 `article_title`。封面只使用 `cover_title`、`cover_subtitle`、`highlight` 和 `tags`，不要直接塞完整长标题。
+`article.md` 的 H1 使用 `article_title`。封面只使用 `cover_title`、`cover_subtitle` 和 `highlight`，不要直接塞完整长标题；不要再为封面生成三段分类小字。
 
 ## 文章标题
 
@@ -45,10 +44,22 @@
 
 ## 封面文案
 
-- `cover_title`：2-8 个汉字，最多 10 个。优先放公司名、产品名、地点名、关键名词。
-- `cover_subtitle`：6-14 个汉字，最多 18 个。补充背景，不写完整结论。
-- `highlight`：2-6 个汉字，最多 8 个。作为红色/黑色视觉钩子。
-- `tags`：2-4 个短词，用 ` / ` 分隔，例如 `平台 / 消费 / 普通人`。
+- 封面按“视觉宽度”控制，不按纯汉字数硬砍。1 个汉字约等于 1，英文/数字约等于 0.5，空格约等于 0.3。
+- `cover_title`：主视觉词。放最吸睛的主体：公司名、产品名、版本号、地点名。建议视觉宽度 ≤ 7，最多 ≤ 9。
+- `cover_subtitle`：背景动作。放“谁做了什么 / 什么东西上线”。建议视觉宽度 ≤ 12，最多 ≤ 15；可以保留英文产品名，但不要写完整句子。
+- `highlight`：点击钩子。放价格、冲突、结论或变化。建议视觉宽度 ≤ 6，最多 ≤ 8。
+- 超长时优先压缩 `highlight`，其次压缩 `cover_subtitle`；不要压缩掉 `cover_title` 里的核心主体名。
+
+示例：
+
+```json
+{
+  "article_title": "CSDN上线GLM5.2 Coding Plan，海外版贵两倍多",
+  "cover_title": "GLM5.2",
+  "cover_subtitle": "CSDN上线Coding Plan",
+  "highlight": "49元起"
+}
+```
 
 长标题要压缩成“主标题 + 副标题”：
 

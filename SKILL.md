@@ -28,9 +28,9 @@ metadata:
 
 1. 写作前读 `prompts/quality-and-risk.md`、`prompts/title-and-cover.md` 和 `prompts/markdown-elements.md`。
 2. 初稿完成后必须使用外部 `humanizer` skill 做去 AI 味，不读取 xiaohu 内部去味文件。
-3. 生成封面/正文图前必须读 `references/visual-generation-light.md`。
+3. 生成封面/正文图前只读 `references/visual-generation-light.md`。
 
-不要读取旧人设、完整视觉风格库、复杂结构防重、长篇排障材料、`.archive/` 归档内容，或已删除的 xiaohu 内部去味文件。
+不要读取封面预设池 JSON、旧人设、完整视觉风格库、复杂结构防重、长篇排障材料、`.archive/` 归档内容，或已删除的 xiaohu 内部去味文件。
 
 ## 轻量主流程
 
@@ -39,8 +39,8 @@ metadata:
 3. 查近期历史：只看同账号最近标题和文章大意，避免写同一件事或同一大意。
 4. 写初稿：1500-3000 字，至少 2 个信息源，重要事实尽量 3 个源；不规定固定结构。
 5. 去 AI 味：调用外部 `humanizer` skill 重写初稿；建议保存 `article.raw.md`、`article.md` 和 `humanizer-report.md`。AI 味风险为高时不得发布。
-6. 标题压缩：基于终稿写 `title-card.json`，输出 `article_title`、`cover_title`、`cover_subtitle`、`highlight`、`tags`；`article.md` 的 H1 使用 `article_title`。
-7. 生成视觉：封面必做；封面只吃短封面字段；正文图进入判断，按文章类型生成 0-2 张。
+6. 标题压缩：基于终稿写 `title-card.json`，输出 `article_title`、`cover_title`、`cover_subtitle`、`highlight`；封面文案按视觉宽度控制，`article.md` 的 H1 使用 `article_title`。
+7. 生成视觉：封面必做；封面只吃短封面字段并使用内置封面预设池；正文图进入判断，按文章类型生成 0-2 张。
 8. 排版和发布：先 dry-run，通过后推草稿箱。
 9. 归档：只记录标题和 100-200 字文章大意，供后续防重。
 
@@ -81,11 +81,12 @@ AI 味风险：低 / 中 / 高
 ## 视觉要求
 
 - 封面必生成 `cover.png`，使用 `scripts/render_editorial_cover.py` 和 `templates/cover-magazine-v1.html` 的新杂志人物模板。
-- 封面不要直接使用完整长标题；必须使用 `title-card.json` 中的短字段。
+- 封面不要直接使用完整长标题；必须使用 `title-card.json` 中的短字段。人物图、裁切和版式由封面预设池自动选择，不要让生成任务单独挑人物图。
 - 正文图必须进入判断阶段，但数量可以是 0、1 或 2 张。
 - 正文图只走轻量路径：信息图、场景图、对比图、流程/结构图。
-- 生成前在 job 目录写 `visual-meta.json`，记录本次 prompt 意图，方便人工复盘；不再把视觉元数据写入长期防重历史。
+- 生成前在 job 目录写 `visual-meta.json`，只记录本次 prompt 意图；不做视觉审核，不写入长期防重历史。
 - 图片失败不阻断主流程：封面失败可跳过封面参数，正文图失败删除 marker，最终报告说明“配图失败，已跳过”。
+- 不做 OCR、识图、图片相似度、视觉评分等低性价比检查。
 
 ### 正文图注入避坑
 
