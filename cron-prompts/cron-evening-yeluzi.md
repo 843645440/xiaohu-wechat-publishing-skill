@@ -16,7 +16,7 @@
 
 加载并服从 `xiaohu-wechat-publishing` 和外部 `humanizer` skill。按阶段执行：
 
-- 写作前：`prompts/quality-and-risk.md`、`prompts/markdown-elements.md`
+- 写作前：`prompts/quality-and-risk.md`、`prompts/title-and-cover.md`、`prompts/markdown-elements.md`
 - 初稿后：使用外部 `humanizer` skill，保存 `article.raw.md`、`article.md` 和 `humanizer-report.md`
 - 配图前：`references/visual-generation-light.md`
 
@@ -38,8 +38,9 @@
 4. 选一个风险低、信息够、容易讲清楚的题。没有安全题就停止。
 5. 写初稿到 `article.raw.md`：1500-3000 字，至少 2 个独立来源，开头 3 段内说清楚发生了什么和为什么值得看。
 6. 使用外部 `humanizer` skill 对 `article.raw.md` 做去 AI 味，输出终稿 `article.md`，并写 `humanizer-report.md`。AI 味风险为高时继续重写，不发布。
-7. 读取 `references/visual-generation-light.md`。生成 `cover.png`；正文图按内容判断 0-2 张，并写 `visual-meta.json`。
-8. dry-run 通过后推草稿箱；成功后历史只记录标题和文章大意。
+7. 按 `prompts/title-and-cover.md` 基于终稿生成 `title-card.json`，并确保 `article.md` 的 H1 使用 `article_title`。如果文章核心围绕强公司/平台/产品，标题必须点名。
+8. 读取 `references/visual-generation-light.md`。用 `title-card.json` 的短字段生成 `cover.png`；正文图按内容判断 0-2 张，并写 `visual-meta.json`。
+9. dry-run 通过后推草稿箱；成功后历史只记录标题和文章大意。
 
 ## 4. 发布命令
 
@@ -66,6 +67,7 @@ python3 scripts/run.py publish_pipe.py \
 
 ```text
 标题：
+封面标题：
 文章大意：
 为什么选这个题：
 来源数量：

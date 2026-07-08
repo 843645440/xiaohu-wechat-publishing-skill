@@ -31,11 +31,14 @@ Keep the skill lightweight. Do not load all references.
 
 - Main entry: `SKILL.md`
 - Writing guardrails: `prompts/quality-and-risk.md`
+- Title and cover copy: `prompts/title-and-cover.md`
 - Markdown elements: `prompts/markdown-elements.md`
 - Required AI-flavor pass: external `humanizer` skill
 - Required visual pass: `references/visual-generation-light.md`
 
 Do not use deleted legacy workflows, xiaohu internal humanizer files, external visual skills, or old design docs. External `humanizer` is now the required AI-flavor pass.
+
+`.archive/` contains inactive historical backups only. Do not load it during normal writing, visual generation, formatting, or publishing.
 
 ## Pipeline architecture
 
@@ -43,6 +46,7 @@ Do not use deleted legacy workflows, xiaohu internal humanizer files, external v
 - `workspace.py` — workspace paths and token cache paths.
 - `format.py` — Markdown to WeChat-compatible inline-styled HTML.
 - `image_injector.py` — only source of body-image injection.
+- `render_editorial_cover.py` — active magazine-style cover renderer.
 - `publish_pipe.py` — format → inject → validate → publish draft.
 - `publish_history.py` — AI disclosure hard scan, high-risk soft scan, minimal title/summary history.
 - `doctor.py` — environment preflight.

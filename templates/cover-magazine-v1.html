@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magazine Cover Template V1</title>
+  <style>
+    @font-face {
+      font-family: "XinYuGongHeXieSong";
+      src: url("file:///home/ubuntu/.fonts/xinyugong/新愚公和谐宋-H.ttf") format("truetype");
+      font-weight: 900;
+      font-display: block;
+    }
+    @font-face {
+      font-family: "WQYZenHeiLocal";
+      src: url("file:///usr/share/fonts/truetype/wqy/wqy-zenhei.ttc") format("truetype");
+      font-weight: 400 950;
+      font-display: block;
+    }
+    :root {
+      --paper: #f1eadf;
+      --paper-light: #faf6ed;
+      --ink: #111111;
+      --soft-ink: rgba(17, 17, 17, .68);
+      --red: #931b16;
+      --red-soft: rgba(147, 27, 22, .88);
+      --frame: #151515;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 900px;
+      height: 383px;
+      overflow: hidden;
+      background: var(--frame);
+      color: var(--ink);
+      font-family: "XinYuGongHeXieSong", "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", "WQYZenHeiLocal", serif;
+    }
+    .cover {
+      position: relative;
+      width: 900px;
+      height: 383px;
+      overflow: hidden;
+      border: 7px solid var(--frame);
+      background:
+        radial-gradient(circle at 88% 62%, rgba(147, 27, 22, .13), transparent 21%),
+        linear-gradient(180deg, var(--paper-light) 0%, var(--paper) 100%);
+      isolation: isolate;
+    }
+    .cover::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(rgba(17,17,17,.18) .55px, transparent .7px) 52px 20px / 5px 5px,
+        linear-gradient(90deg, transparent 0 64%, rgba(17,17,17,.14) 64% calc(64% + 1px), transparent calc(64% + 1px) 100%);
+      opacity: .22;
+      pointer-events: none;
+    }
+    .cover::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.20), transparent 24% 76%, rgba(0,0,0,.07)),
+        radial-gradient(circle at 30% 26%, rgba(255,255,255,.42), transparent 32%);
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+    .top-red {
+      position: absolute;
+      z-index: 4;
+      right: -22px;
+      top: 25px;
+      width: 392px;
+      height: 24px;
+      background: var(--red);
+      transform: rotate(-5deg);
+      transform-origin: right center;
+    }
+    .thin-rule {
+      position: absolute;
+      z-index: 3;
+      left: 36px;
+      top: 88px;
+      width: 506px;
+      height: 1px;
+      background: rgba(17,17,17,.46);
+      transform: rotate(-3deg);
+    }
+    .right-panel {
+      position: absolute;
+      z-index: 2;
+      right: 16px;
+      top: 90px;
+      width: 350px;
+      height: 246px;
+      background: #181818;
+      overflow: hidden;
+    }
+    .right-panel::before {
+      content: "";
+      position: absolute;
+      right: -76px;
+      bottom: -92px;
+      width: 248px;
+      height: 248px;
+      border: 11px solid var(--red-soft);
+      border-radius: 50%;
+    }
+    .right-panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,.20) .45px, transparent .65px);
+      background-size: 5px 5px;
+      opacity: .12;
+    }
+    .right-meta {
+      position: absolute;
+      z-index: 9;
+      right: 336px;
+      top: 52px;
+      padding-top: 18px;
+      border-left: 2px solid rgba(17,17,17,.72);
+      padding-left: 16px;
+      color: rgba(17,17,17,.72);
+      font-family: "WQYZenHeiLocal", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 10px;
+      line-height: 1.42;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+    .right-meta::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 16px;
+      width: 48px;
+      height: 5px;
+      background: var(--red);
+    }
+    .copy {
+      position: absolute;
+      z-index: 6;
+      left: 48px;
+      top: 70px;
+      width: 628px;
+    }
+    .subtitle {
+      display: inline-block;
+      color: var(--red);
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 900;
+      margin-bottom: 13px;
+      padding-right: 26px;
+      border-bottom: 1px solid rgba(147,27,22,.62);
+    }
+    .cover-title {
+      margin: 0;
+      color: var(--ink);
+      font-size: 112px;
+      line-height: .96;
+      font-weight: 900;
+      letter-spacing: 0;
+      max-width: 628px;
+      text-shadow: 0 1px 0 rgba(17,17,17,.12);
+    }
+    .title-short .cover-title { font-size: 118px; }
+    .title-medium .cover-title { font-size: 110px; }
+    .title-long .cover-title { font-size: 86px; line-height: .98; max-width: 660px; }
+    .highlight {
+      margin-top: 12px;
+      display: inline-block;
+      color: var(--ink);
+      font-size: 46px;
+      line-height: 1.05;
+      font-weight: 900;
+    }
+    .tags {
+      position: absolute;
+      z-index: 6;
+      left: 50px;
+      bottom: 46px;
+      min-width: 420px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(147,27,22,.55);
+      color: rgba(17,17,17,.78);
+      font-family: "WQYZenHeiLocal", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 500;
+      letter-spacing: 2px;
+    }
+    .brand-chip {
+      position: absolute;
+      z-index: 6;
+      left: 50px;
+      bottom: 31px;
+      display: none;
+      align-items: center;
+      gap: 11px;
+      color: rgba(17,17,17,.52);
+      font-family: "WQYZenHeiLocal", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+    .brand-chip::before {
+      content: "";
+      width: 7px;
+      height: 22px;
+      background: var(--red);
+    }
+    .persona-stage {
+      position: absolute;
+      z-index: 5;
+      right: -18px;
+      bottom: 0;
+      width: 426px;
+      height: 383px;
+      overflow: hidden;
+    }
+    .persona-img {
+      position: absolute;
+      display: block;
+      width: auto;
+      max-width: none;
+      filter: saturate(.98) contrast(1.10);
+      transform-origin: right bottom;
+    }
+    .persona-mode-half .persona-img {
+      height: 685px;
+      right: -20px;
+      bottom: -347px;
+    }
+    .persona-mode-shoulder .persona-img {
+      height: 840px;
+      right: -82px;
+      bottom: -508px;
+    }
+    .persona-mode-bust .persona-img {
+      height: 760px;
+      right: -64px;
+      bottom: -444px;
+    }
+    .cut-slab {
+      position: absolute;
+      z-index: 7;
+      right: -30px;
+      bottom: -46px;
+      width: 482px;
+      height: 104px;
+      background: #171717;
+      transform: rotate(-8deg);
+      transform-origin: right bottom;
+      box-shadow: 0 -1px 0 rgba(255,255,255,.04) inset;
+    }
+    .cover.xiaocong {
+      --red: #8f1f18;
+      --red-soft: rgba(143,31,24,.88);
+    }
+    .cover.yeluzi {
+      --red: #9f1e18;
+      --red-soft: rgba(159,30,24,.88);
+    }
+    .portrait-anchor .copy { top: 62px; }
+    .portrait-anchor .right-panel { top: 91px; }
+    .diagonal-newsstand .copy {
+      top: 82px;
+      left: 68px;
+      width: 640px;
+      transform: rotate(-3.5deg);
+      transform-origin: left top;
+    }
+    .diagonal-newsstand .cover-title { font-size: 100px; max-width: 670px; }
+    .diagonal-newsstand.title-short .cover-title { font-size: 112px; }
+    .diagonal-newsstand.title-long .cover-title { font-size: 80px; }
+    .diagonal-newsstand .subtitle {
+      font-size: 31px;
+      margin-bottom: 7px;
+    }
+    .diagonal-newsstand .highlight {
+      font-size: 62px;
+      border-bottom: 3px solid var(--red);
+    }
+    .diagonal-newsstand .right-panel {
+      top: 104px;
+      right: -14px;
+      width: 376px;
+      height: 242px;
+      transform: rotate(-3deg);
+    }
+    .diagonal-newsstand .cut-slab {
+      height: 120px;
+      transform: rotate(-7deg);
+    }
+    .black-label .copy {
+      top: 74px;
+      width: 632px;
+    }
+    .black-label .cover-title { font-size: 96px; max-width: 632px; }
+    .black-label.title-short .cover-title { font-size: 110px; }
+    .black-label.title-medium .cover-title { font-size: 100px; }
+    .black-label.title-long .cover-title { font-size: 78px; }
+    .black-label .highlight {
+      margin-top: 10px;
+      padding: 4px 20px 7px;
+      background: linear-gradient(180deg, rgba(147,27,22,.96), rgba(112,17,14,.96));
+      color: var(--paper-light);
+      font-size: 50px;
+    }
+    .black-label .right-panel {
+      right: -8px;
+      top: 68px;
+      width: 360px;
+      height: 296px;
+    }
+    .black-label .persona-stage {
+      right: -34px;
+      width: 430px;
+    }
+    .black-label .top-red {
+      left: 50px;
+      right: auto;
+      top: 48px;
+      width: 200px;
+      height: 7px;
+      transform: none;
+    }
+    .black-label .thin-rule {
+      top: auto;
+      bottom: 46px;
+      transform: none;
+      background: rgba(147,27,22,.65);
+    }
+  </style>
+</head>
+<body>
+  <main class="cover {{ACCOUNT_STYLE}} {{VARIANT}} persona-mode-{{PERSONA_MODE}} {{TITLE_SIZE}}">
+    <div class="top-red"></div>
+    <div class="thin-rule"></div>
+    <div class="right-panel"></div>
+    <div class="right-meta">
+      XIAOHU<br />
+      FIELD NOTES<br />
+      {{BRAND}}
+    </div>
+    <section class="copy">
+      <div class="subtitle">{{COVER_SUBTITLE}}</div>
+      <h1 class="cover-title">{{COVER_TITLE}}</h1>
+      <div class="highlight">{{HIGHLIGHT}}</div>
+    </section>
+    <div class="tags">{{TAGS}}</div>
+    <div class="brand-chip">{{BRAND}} / FIELD NOTES</div>
+    <div class="persona-stage">
+      <img class="persona-img" src="{{PERSONA_SRC}}" alt="" />
+    </div>
+    <div class="cut-slab"></div>
+  </main>
+</body>
+</html>

@@ -7,6 +7,7 @@
 Job 目录至少包含：
 
 ```text
+title-card.json
 cover.png
 visual-meta.json
 body-1.png / body-2.png  # 如有正文图
@@ -15,10 +16,44 @@ body-1.png / body-2.png  # 如有正文图
 ## 封面
 
 - 封面必须生成，保持账号品牌气质。
-- 封面标题尽量短，不把正文结论写死。
+- 封面只使用 `prompts/title-and-cover.md` 产出的短字段：`cover_title`、`cover_subtitle`、`highlight`、`tags`。
+- 不要把完整文章标题硬塞进封面；`cover_title` 建议 2-8 个汉字，`cover_subtitle` 建议 6-14 个汉字。
 - 封面失败时可以跳过封面参数推草稿箱，但报告里说明“封面失败，需后台手动补封面”。
+- 使用 `scripts/render_editorial_cover.py` + `templates/cover-magazine-v1.html` 生成公共杂志风封面。人物默认来自 `assets/creator-persona/poses/transparent/`，作为右下角半身、肩颈或大头像视觉锚点。
 
-可继续使用现有渲染脚本或 Agnes 生图。Swiss/Editorial 旧流程不用展开到主上下文里。
+不要加载 `.archive/legacy-cover-logic/`。那里只是旧 Swiss/Brutalism/Editorial V2 逻辑备份，不属于运行流程。
+
+推荐命令：
+
+```bash
+python3 scripts/run.py render_editorial_cover.py \
+  --account-style xiaocong \
+  --article-title "英伟达，正在改写 AI 服务器价格" \
+  --cover-title "英伟达" \
+  --cover-subtitle "AI 服务器价格变了" \
+  --highlight "新变量" \
+  --tags "AI / 芯片 / 服务器" \
+  --out /abs/job/cover.png
+```
+
+可选：
+
+- `--variant portrait-anchor | diagonal-newsstand | black-label | auto`
+- `--persona-mode half | shoulder | bust | auto`
+- `--persona /abs/path/to/pose.png`
+
+默认 `auto` 会按标题稳定挑选变体、姿势和裁切，避免连续封面同构。
+
+渲染脚本优先使用 Python Playwright；如果当前 agent 环境没有 Playwright，会自动调用系统 Chrome/Chromium headless 截图。
+
+### 固定个人 IP 形象
+
+如封面需要人物增强识别度，优先使用 `assets/creator-persona/README.md` 中的 Future Street Philosopher 资产包：
+
+- 只读取 `assets/creator-persona/README.md` 和 `assets/creator-persona/docs/character-spec.md`，不要加载大量视觉历史。
+- 优先叠加现有透明姿势，不要每次重新生成人物。
+- 文章主题由短标题、短 hook 和版式表达；人物保持中性，不加入手机、图表、钱、外卖、超市、品牌等主题物件。
+- 为避免封面结构重复，切换变体、姿势、半身/肩颈/大头像裁切、标题位置、几何元素、色彩强调和留白比例。
 
 ## 正文图判断
 
@@ -103,9 +138,18 @@ SIZE: 1024x576
 
 ```json
 {
+  "title_card": {
+    "article_title": "文章 H1",
+    "cover_title": "封面主标题",
+    "cover_subtitle": "封面副标题",
+    "highlight": "高亮词",
+    "tags": "短标签"
+  },
   "cover": {
-    "type": "editorial-cover",
+    "type": "magazine-persona-cover",
     "subject": "文章具体主题",
+    "variant": "portrait-anchor | diagonal-newsstand | black-label",
+    "persona_mode": "half | shoulder | bust",
     "prompt_key": "account-date-topic-cover"
   },
   "body_images": [

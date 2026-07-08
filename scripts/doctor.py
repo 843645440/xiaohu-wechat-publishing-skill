@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 from workspace import ensure_workspace, workspace_root
+from render_editorial_cover import find_system_browser
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -63,18 +64,23 @@ def main():
     check(root.exists(), f"workspace exists: {root}", f"workspace missing: {root}", failures,
           fix=f"mkdir -p {root}/jobs {root}/cache/tokens {root}/tmp")
 
-    py_ok = sys.version_info >= (3, 10)
+    py_ok = sys.version_info >= (3, 9)
     check(py_ok, f"python {sys.version.split()[0]}",
-          "Python 3.10+ required; Python 3.12+ recommended",
+          "Python 3.9+ required; Python 3.12+ recommended",
           failures,
-          fix="apt install python3.12  # or use pyenv to install 3.12+")
+          fix="install Python 3.12+ via pyenv, Homebrew, apt, or system package manager")
 
     # Detect which python has the required modules (uses runtime.python_bin)
     try:
-        from runtime import python_bin, REQUIRED_MODS
+        from runtime import python_bin
         bin_path = python_bin()
         print(f"INFO detected python_bin = {bin_path}")
-        for module in REQUIRED_MODS:
+        required_mods = ["markdown"]
+        if mode_requires_accounts(args.mode):
+            required_mods.append("requests")
+        if args.mode == "all":
+            required_mods.append("PIL")
+        for module in required_mods:
             r = subprocess.run([bin_path, "-c", f"import importlib.util,sys; sys.exit(0 if importlib.util.find_spec({module!r}) else 1)"],
                                capture_output=True, timeout=5)
             has = (r.returncode == 0)
@@ -83,7 +89,12 @@ def main():
                   fix=f"{bin_path} -m pip install --user --break-system-packages {module if module!='PIL' else 'pillow'}")
     except Exception as e:
         print(f"WARN runtime.python_bin probe failed: {e}")
-        for module in ("markdown", "requests", "PIL", "playwright"):
+        fallback_mods = ["markdown"]
+        if mode_requires_accounts(args.mode):
+            fallback_mods.append("requests")
+        if args.mode == "all":
+            fallback_mods.append("PIL")
+        for module in fallback_mods:
             check(
                 importlib.util.find_spec(module) is not None,
                 f"module {module}",
@@ -94,6 +105,7 @@ def main():
 
     browser_check_ok = True
     browser_hint = ""
+    system_browser = find_system_browser()
     if importlib.util.find_spec("playwright") is not None:
         try:
             from playwright.sync_api import sync_playwright
@@ -106,12 +118,18 @@ def main():
         except Exception as exc:
             browser_check_ok = False
             browser_hint = f"playwright browser check failed: {exc}"
+    elif system_browser:
+        browser_check_ok = True
+        browser_hint = f"system browser fallback: {system_browser}"
+    else:
+        browser_check_ok = False
+        browser_hint = "no Python Playwright and no system Chrome/Chromium fallback found"
     check(
         browser_check_ok,
-        "playwright chromium installed",
-        browser_hint or "playwright chromium missing",
+        browser_hint or "cover renderer browser available",
+        browser_hint or "cover renderer browser missing",
         failures,
-        fix=f"{sys.executable} -m playwright install chromium",
+        fix=f"{sys.executable} -m playwright install chromium  # or install Google Chrome/Chromium",
     )
 
     themes_dir = SKILL_DIR / "themes"
@@ -119,7 +137,7 @@ def main():
     check(theme_count > 0, f"themes available: {theme_count}", "themes directory is empty/missing",
           failures, fix=f"ls {themes_dir}  # if missing, re-install skill via skillhub")
 
-    for template in ("preview.html", "gallery.html", "editorial-cover-v2.html", "editorial-body-modular-v1.html"):
+    for template in ("preview.html", "gallery.html", "cover-magazine-v1.html", "editorial-body-modular-v1.html"):
         check((SKILL_DIR / "templates" / template).exists(),
               f"template {template}", f"missing template {template}",
               failures, fix=f"# re-install skill: skillhub --dir ~/.hermes/skills install xiaohu-wechat-publishing")
@@ -142,7 +160,9 @@ def main():
             print("WARN no WECHAT_APPID_* found in ~/.hermes/.env (ignored in --mode format)")
 
     linux_font = Path("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc")
-    if os.name == "nt":
+    if sys.platform == "darwin":
+        print("WARN linux font check skipped on macOS; cover template uses system Chinese fallbacks")
+    elif os.name == "nt":
         print("WARN linux font check skipped on Windows")
     else:
         check(linux_font.exists(), f"font exists: {linux_font}", f"missing font: {linux_font}",

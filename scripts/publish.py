@@ -73,7 +73,7 @@ _load_accounts_from_env()
 
 # 先加载 config.json 作为默认
 with open(SKILL_DIR / "config.json", encoding="utf-8") as f:
-CONFIG = json.load(f)
+    CONFIG = json.load(f)
 
 WORKSPACE_ROOT = workspace_root(CONFIG)
 

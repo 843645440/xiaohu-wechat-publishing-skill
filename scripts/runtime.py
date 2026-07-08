@@ -6,7 +6,7 @@ under /usr/bin/python3.12 but NOT under /usr/bin/python3 (3.10 / 3.11).
 
 Public API:
     python_bin()  -> str  # absolute path of a Python interpreter that satisfies
-                          # min version AND has 'markdown','requests','PIL','playwright'
+                          # min version AND has core formatting dependencies.
     is_tty()      -> bool # whether stdout is a real terminal (vs. pipe / agent run)
 """
 
@@ -18,7 +18,7 @@ import subprocess
 import sys
 from functools import lru_cache
 
-REQUIRED_MODS = ("markdown", "requests", "PIL", "playwright")
+REQUIRED_MODS = ("markdown",)
 CANDIDATES = (
     os.environ.get("HERMES_PYTHON"),
     "python3.14", "python3.13", "python3.12", "python3.11", "python3.10",
@@ -34,7 +34,7 @@ def _probe(binary: str) -> bool:
         return False
     code = (
         "import sys\n"
-        "ok = sys.version_info >= (3, 10)\n"
+        "ok = sys.version_info >= (3, 9)\n"
         "import importlib.util as u\n"
         "ok = ok and all(u.find_spec(m) is not None for m in "
         + repr(list(REQUIRED_MODS))
