@@ -7,10 +7,12 @@
 | `cron-morning-xiaocong.md` | xiaocong（熵增时刻） | 每天北京时间 07:00 | 科技/产业/AI/公司变化 |
 | `cron-evening-yeluzi.md` | yeluzi（思想的野路子丶） | 每天北京时间 17:00 | 民生/消费/职场/平台规则 |
 
-## v4.0 lightweight 原则
+## v4.1 information-first 原则
 
 - Cron prompt 只保留任务差异和执行顺序，不复制长规则。
 - 写作前读 `prompts/quality-and-risk.md` 和 `prompts/markdown-elements.md`。
+- 写稿前写简短的 `source-notes.md`，记录事实及来源；它只属于当次 job，不进入长期历史。
+- 初稿后先做删除式空话检查，再进入 humanizer。
 - 初稿后必须使用外部 `humanizer` skill，并保存 `article.raw.md`、`article.md`、`humanizer-report.md`。
 - 配图前只读 `references/visual-generation-light.md`；不要读取封面预设池、人物资产说明或旧视觉文档。
 - 防重只看近期标题和文章大意。

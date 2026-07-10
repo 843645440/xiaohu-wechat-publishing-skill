@@ -2,7 +2,7 @@
 name: xiaohu-wechat-publishing
 description: |
   Use when working with WeChat Official Account: topic planning, lightweight writing, external humanizer pass, cover/body visuals, formatting, and draft-box publishing. Triggers: 写公众号, 微信排版, 公众号文章, 推草稿箱, 发公众号, 熵增时刻, 思想的野路子丶, or packaging an article for WeChat.
-version: 5.2.0
+version: 5.3.0
 author: Hermes curator
 license: MIT
 metadata:
@@ -12,7 +12,7 @@ metadata:
 
 # 小虎公众号轻量生产管线
 
-这是公众号主 skill。目标不是每篇都做成深度专栏，而是稳定批量产出：避开明显风控，有一点有用信息，表达清楚。去 AI 味统一交给外部 `humanizer` skill，xiaohu 内部不再维护自有去味规则。
+这是公众号主 skill。目标不是每篇都做成深度专栏，而是稳定批量产出：避开明显风控，像热点新闻记者一样，用可核实事实提供清楚、可复述的信息增量。去 AI 味统一交给外部 `humanizer` skill，xiaohu 内部不再维护自有去味规则。
 
 ## 默认原则
 
@@ -37,21 +37,25 @@ metadata:
 1. 明确账号和任务：`xiaocong` 偏科技/产业/AI，`yeluzi` 偏民生/消费/职场/平台规则。
 2. 找安全选题：避开政治、敏感社会议题、财经预测、投资建议、未经证实爆料。
 3. 查近期历史：只看同账号最近标题和文章大意，避免写同一件事或同一大意。
-4. 写初稿：1500-3000 字，至少 2 个信息源，重要事实尽量 3 个源；不规定固定结构。
-5. 去 AI 味：调用外部 `humanizer` skill 重写初稿；建议保存 `article.raw.md`、`article.md` 和 `humanizer-report.md`。AI 味风险为高时不得发布。
-6. 标题压缩：基于终稿写 `title-card.json`，输出 `article_title`、`cover_title`、`cover_subtitle`、`highlight`；封面文案按视觉宽度控制，`article.md` 的 H1 使用 `article_title`。
-7. 生成视觉：封面必做；封面只吃短封面字段并使用内置封面预设池；正文图进入判断，按文章类型生成 0-2 张。
-8. 排版和发布：先 dry-run，通过后推草稿箱。
-9. 归档：只记录标题和 100-200 字文章大意，供后续防重。
+4. 整理事实底稿：在 job 目录写简短的 `source-notes.md`，记录核心新闻点、3-6 条可核实事实及其来源、有效背景/对比、暂不能确认的信息。转载同一原始消息的页面只算 1 个来源。
+5. 写初稿：篇幅完全跟信息量走，通常 1000-3500 字，仅在来源足、机制复杂或有多方对比时写到 3500-4500 字；这是参考范围，不是凑字指标。把自己当作热点新闻记者，围绕当篇素材自然组织，不套固定栏目。
+6. 删空话：初稿完成后删除重复结论、万能过渡、无事实支撑的感叹，以及删掉后不影响理解的段落。
+7. 去 AI 味：调用外部 `humanizer` skill 重写表达，但不得新增、删除或改变关键事实；保存 `article.raw.md`、`article.md` 和 `humanizer-report.md`。AI 味或空话密度为高时不得发布。
+8. 标题压缩：基于终稿写 `title-card.json`，输出 `article_title`、`cover_title`、`cover_subtitle`、`highlight`；封面文案按视觉宽度控制，`article.md` 的 H1 使用 `article_title`。
+9. 生成视觉：封面必做；封面只吃短封面字段并使用内置封面预设池；正文图进入判断，按文章类型生成 0-2 张。
+10. 排版和发布：确认 `source-notes.md` 存在、AI 味与空话密度都不高、关键事实完整后再 dry-run，通过后推草稿箱。
+11. 归档：只记录标题和 100-200 字文章大意，供后续防重；`source-notes.md` 只留在当次 job，不进入长期历史。
 
 ## 写作要求
 
-- 不写单篇新闻改写；至少整合 2 个独立来源。
-- 开头 3 段内说清楚：发生了什么，为什么现在值得看。
-- 每篇至少给读者 1 个有用信息点：数据、背景、对比、避坑、操作建议、行业变化之一。
+- 不写单篇新闻改写；优先使用官方公告、产品页、规则原文、公开数据等一手来源，再用独立来源补充或交叉核对。搜索摘要不算来源。
+- 篇幅跟信息量走：短消息短写，复杂事件长写；不要为了达到参考字数扩写空话。
+- 像热点新闻记者：抓住新闻点，补充可核实的事实、背景、数字、对比、案例或操作信息；没有可靠来源的场景、反应和引语不要编。
+- 每篇必须有读者能复述的信息增量，不只复述消息、改写新闻稿或堆情绪。
+- 每个段落至少承担一种作用：提供新事实、解释事实、给出有效对比或帮助读者采取行动。纯过渡和重复总结直接删除。
 - 标题必须经过 `prompts/title-and-cover.md` 压缩；强主体文章要在标题中点名公司/平台/产品。
-- 小标题自然生成，不用模板标题。
-- 不强制固定结构或固定报告角度。
+- 小标题自然生成，不用模板标题；不要套固定栏目或统一四段式。
+- 最终报告字段只用于任务汇报，不要写成正文提纲或正文小标题。
 - 如果安全题不足，停止并说明“今天不适合自动生成草稿”，不要硬写。
 
 ## 去 AI 味硬规则
@@ -63,6 +67,7 @@ metadata:
 ```text
 article.raw.md          # 初稿
 article.md              # humanizer 后终稿
+source-notes.md         # 当次事实底稿，不进入长期历史
 title-card.json         # 文章标题和封面短文案
 humanizer-report.md     # 外部 humanizer 检查与修改摘要
 ```
@@ -73,10 +78,16 @@ humanizer-report.md     # 外部 humanizer 检查与修改摘要
 AI 味风险：低 / 中 / 高
 空话密度：低 / 中 / 高
 口语自然度：低 / 中 / 高
+关键事实保留：完整 / 有缺失
 是否需要重写：是 / 否
 ```
 
-若 AI 味风险为高，继续用外部 `humanizer` skill 重写，不得进入排版发布。
+`humanizer` 只能调整表达和节奏，不得改动数字、日期、主体、引用归属、来源结论或不确定性限定，也不得凭空补充案例和观点。
+
+- AI 味风险为高：继续用外部 `humanizer` skill 重写。
+- 空话密度为高：不得发布，先压缩重写。
+- 空话密度为中：删除重复和无信息段落后再检查。
+- 关键事实有缺失：按 `source-notes.md` 恢复并重新去 AI 味。
 
 ## 视觉要求
 
@@ -161,6 +172,7 @@ python3 scripts/run.py publish_pipe.py \
 
 ```text
 article.md
+source-notes.md
 title-card.json
 cover.png
 visual-meta.json
@@ -180,6 +192,9 @@ format/
 文章大意：
 为什么选这个题：
 来源数量：
+事实底稿是否完成：
+空话密度：
+关键事实是否保留：
 是否避开敏感题：
 是否与近期大意重复：
 去 AI 味是否完成：
@@ -188,7 +203,7 @@ dry-run/草稿箱结果：
 产物路径：
 ```
 
-不要添加额外的固定结构分析字段。
+这些字段只用于汇报执行结果，不是文章结构模板。
 
 ## 排版和发布路径
 
